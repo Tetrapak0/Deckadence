@@ -1,21 +1,36 @@
 cmake_minimum_required(VERSION 3.15)
-project(NexusShell)
-set(CMAKE_C_STANDARD   17)
+project(Deckadence)
+
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_C_STANDARD_REQUIRED   True)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
+include_directories(include)
+include_directories(include/Client)
+include_directories(include/Config)
+include_directories(include/GUI)
+include_directories(include/Server)
+include_directories(include/Utilities)
 
-file(GLOB NxShSource ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
-                     ${CMAKE_CURRENT_SOURCE_DIR}/src/config/*.cpp
-                     ${CMAKE_CURRENT_SOURCE_DIR}/src/gui/*.cpp
-                     ${CMAKE_CURRENT_SOURCE_DIR}/src/net/*.cpp
-                     ${CMAKE_CURRENT_SOURCE_DIR}/src/util/*.cpp)
-file(GLOB ImGuiSource ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/*.cpp)
+file(GLOB DxSrc ${CMAKE_CURRENT_LIST_DIR}/src/Client/*.cpp
+                ${CMAKE_CURRENT_LIST_DIR}/src/Config/*.cpp
+                ${CMAKE_CURRENT_LIST_DIR}/src/GUI/*.cpp
+                ${CMAKE_CURRENT_LIST_DIR}/src/Server/*.cpp
+                ${CMAKE_CURRENT_LIST_DIR}/src/Utilities/*.cpp
+                ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp)
+file(GLOB ImSrc ${CMAKE_CURRENT_LIST_DIR}/external/imgui/*.cpp)
+if (WIN32)
+    file (GLOB NFDExSrc ${CMAKE_CURRENT_LIST_DIR}/external/NativeFileDIalogs-Extended/nfd_win.cpp)
+endif()
 
-add_executable(NexusShell ${NxShSource} ${ImGuiSource})
-# TODO: Add libraries.
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-	target_compile_definitions(NexusShell PRIVATE _DEBUG)
+add_executable(Deckadence ${DxSrc} ${ImSrc} ${NFDExSrc})
+
+# must be ran with -DCMAKE_BUILD_TYPE=Debug
+if (${CMAKE_BUILD_TYPE} MATCHES Debug)
+    target_compile_definitions(Deckadence PRIVATE _DEBUG)
+endif()
+
+target_link_libraries(Deckadence glfw3 opengl32 freetype)
+
+if (WIN32)
+    target_link_libraries(Deckadence dwmapi ws2_32 iphlpapi)
 endif()
