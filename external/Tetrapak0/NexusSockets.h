@@ -1,11 +1,13 @@
 #ifndef __NX_SOCK_H__
 #define __NX_SOCK_H__
 
-#include <stdio.h>
-
 #ifdef _WIN32
 #include <winsock2.h>
-#include <WS2tcpip.h>
+#include <ws2tcpip.h>
+#include <afunix.h>
+#include <iphlpapi.h>
+// #include <Windows.h>
+#pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "Ws2_32.lib")
 #else
 #include <arpa/inet.h>
@@ -30,8 +32,13 @@ typedef int    socklen_t;
 
 #define NX_INVALID_SOCKET INVALID_SOCKET
 
+inline int nx_sock_init() {
+    WSAData wsadata;
+    return WSAStartup(MAKEWORD(2, 2), &wsadata);
+}
+#define poll(fdarray, fds, timeout) WSAPoll(fdarray, fds, timeout);
 #define nx_sock_close(sockfd) closesocket(sockfd)
-#define cleanup() WSACleanup()
+#define nx_sock_cleanup() WSACleanup()
 #else
 typedef int socket_t;
 
@@ -41,8 +48,9 @@ typedef int socket_t;
 
 #define NX_INVALID_SOCKET -1
 
+#define nx_sock_init() ((void)0)
 #define nx_sock_close(sockfd) close(sockfd)
-#define cleanup() {}
+#define nx_sock_cleanup() {}
 #endif
 
 #define NX_SOCKET_ERROR -1

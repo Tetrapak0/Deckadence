@@ -22,22 +22,13 @@ Server/.vs/
 *.user
 *.aps
 
-# Misc. 
-build/
-
-Client/build/
-
-Client-aarch64/build/
-
-Server/x64/
-Server/bin/
-
-Server-Linux/
-Server-Linux/build/
-
-# SvelteKit
-# for now, just remove the site in general
-docs/
-# .svelte-kit
-# node_modules
-# docs/build
+# Misc.
+.idea/
+**/cmake-build-debug/
+**/cmake-build-relwithdebinfo/
+**/cmake-build-minsizerel/
+**/cmake-build-release/
+**/build/
+**/.cache/
+**/CMake/
+**/bin/

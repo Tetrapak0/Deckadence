@@ -382,6 +382,12 @@ enum
    STBI_rgb_alpha  = 4
 };
 
+#ifdef _WIN32
+#include <Windows.h>
+#include <stringapiset.h>
+#endif
+
+
 #include <stdlib.h>
 typedef unsigned char stbi_uc;
 typedef unsigned short stbi_us;

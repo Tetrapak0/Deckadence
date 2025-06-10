@@ -1,0 +1,13 @@
+- [ ] C++ 17 or C++ 20?
+- [ ] New editor
+- [ ] Keep checking if config file has been changed and reload if it has been
+- [ ] custom button spacing
+- [ ] custom colours / style in general
+- [ ] BOTH ABOVE for either default values or each device separately
+- [ ] Embed icon in CMake; set icon for linux
+- [ ] Next release is beta
+- [ ] Allow plugin makers to create additional servers / clients to get data from or control
+- [ ] Runtime through DLLs
+- [ ] Multi action buttons / scripts
+
+- [ ] Installer

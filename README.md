@@ -1,81 +1,54 @@
-# NexusShell
+# Deckadence
 <p align="center">
   <img src="https://github.com/Tetrapak0/NexusShell/blob/main/icon.png?raw=true" alt="Icon"/>
 </p>
 
 ## Index:
-- [Help Wanted](#help-wanted)
 - [Acquisiton](#acquisition)
 - [Build](#build)
-    - [Server](#server)
-    - [Client](#client)
-        - [Clone](#1-clone-repository)
-        - [Install Cmake](#2-install-cmake)
-        - [Configure CMake](#3-configure-cmake)
-            - [Cross-Compiling](#32-cross-compiling-for-arm)
-            - [For current platform](#33-for-current-platform)
-## Help Wanted:
-#### Any contributions implementing following features will most likely be approved
-### Top Priority:
-- Code stability, reliability, efficiency, rigidity and robustness
-- include SDL for aarch64
-### High Priority:
-- Image Buttons -- Get file and website thumbnails, cache them, send them to client. This will be even more important once the remote program volume control feature is implemented.
-### Low Priority:
-- Code cleanup
-- Undo for item clearing
-- Numeric sort for JSON elements (profiles, pages, buttons, etc.)
+  - [1. Clone repository](#1-clone-repository)
+  - [2. Install dependencies](#2-install-dependencies)
+  - [3. Configure CMake](#3-configure-cmake)
+  - [4. Build](#4-build)
 ## Acquisition:
-- [Releases](https://github.com/Tetrapak0/NexusShell/releases) (Executable is staticaly linked and portable)
-- [Build](#build)
+- [Prebuilt binaries](https://github.com/Tetrapak0/NexusShell/releases)
+- [Build it yourself](#build)
 ## Build:
-### **If you wish to compile for aarch64, you must build your own SDL3 library for it with an aarch64 OpenGL3 library. Neither are provided, as I have no access to OpenGL3 for aarch64.**
-### **You must also obtain the aarch64 version of the freetype library yourself.**
-### Server:
-As of now, the server only supports Windows and can only be build using Visual Studio. CMake and Linux support are coming.
-### Client:
-The client only supports Linux.
 #### 1. Clone repository
-##### 1.1 Install git if not installed:
-- Arch & based: `sudo pacman -Syu git`
-- Debian & based: `sudo apt update && sudo apt install git`
-- Fedora: `sudo dnf upgrade --refresh && sudo dnf install git`
+##### 1.1 Install git:
+- Arch-based: `sudo pacman -Syyu git`
+- Debian-based: `sudo apt update && sudo apt install git`
+- Fedora-based: `sudo dnf upgrade --refresh && sudo dnf install git`
+- MSYS: `pacman -Syyu git`
 ##### 1.2 Clone
-`git clone https://github.com/Tetrapak0/NexusShell`
-#### 2. Install FreeType
-- Arch & based: `sudo pacman -Syu freetype2`
-- Debian & based: `sudo apt update && sudo apt install libfreetype-dev`
-- Fedora: `sudo dnf upgrade --refresh && sudo dnf install freetype-dev`
-#### 3. Install CMake
-- Arch & based: `sudo pacman -Syu cmake`
-- Debian & based: `sudo apt update && sudo apt install cmake`
-- Fedora: `sudo dnf upgrade --refresh && sudo dnf install cmake`
-#### 4. Configure CMake
-##### 4.1 Build directory
-```console
-cd NexusShell/Client
-mkdir build
+> Note: if you are on Windows, do this step in the MSYS shell
+
+`git clone https://github.com/Tetrapak0/Deckadence --depth 1`
+#### 2. Install dependencies
+#### 2.1 Linux
+>During development for Linux, Deckadence is only built using clang++.
+- Arch-based: `sudo pacman -Syyu freetype2 cmake base-devel clang glfw`
+- Debian-based: `sudo apt update && sudo apt install libfreetype-dev cmake build-essential clang libglfw3`
+- Fedora-based: `sudo dnf upgrade --refresh && sudo dnf install freetype-dev cmake clang glfw && sudo dnf groupinstall "Development Tools" "Development Libraries"`
+#### 2.2 Windows
+> ⚠ MSVC is not supported because Microsoft C++ is completely and utterly repugnant and should be EOL'd. Even their devs hate using it. It's true. ⚠
+>
+> During development for Windows, Deckadence is only built using clang++ via MSYS for the aforementioned reasons.
+1. Install MSYS2 from https://www.msys2.org/
+2. Open the Clang64 environment and run the following commands to install dependencies:
+    > Note that you may be asked to quit the session to update packages. In that case, please re-run the last command.
+    ```shell
+    pacman -Syyu mingw-w64-clang-x86_64-toolchain mingw-w64-clang-x86_64-glfw mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-freetype
+    ```
+3. Enter your MSYS home directory: `cd ~`
+4. Install git via `pacman -S git`
+5. [Clone repository](#1-clone-repository)
+#### 3. Configure CMake
+```shell
+cd Deckadence
+cmake -S . -B build -DCMAKE_BUILD_TYPE=MinSizeRel
 ```
-#
-##### 4.2 Cross-compiling for arm?
-###### 4.2.1 Install gcc for aarch64
-- Arch & based: `sudo pacman -Syu aarch64-linux-gnu-gcc`
-- Debian & based: `sudo apt update && sudo apt install gcc-aarch64-linux-gnu`
-- Fedora: `gcc-aarch64-linux-gnu`
-###### 4.2.2 Configure CMake for cross-compilation
-```console
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCROSS_COMPILE
-```
-#
-#### 4.3 For current platform:
-```console
-cmake .. -DCMAKE_BUILD_TYPE=Release
-```
-#### 5. Build
-```console
-cmake --build . --config Release
-```
-#### 6. Run
-```console
-./NexusShell
+#### 4. Build
+```shell
+cmake --build . --config MinSizeRel
 ```

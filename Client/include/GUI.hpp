@@ -1,17 +1,17 @@
 #pragma once
 
 #include "../../external/imgui/imgui.h"
-#include "../../external/imgui/imgui_impl_sdl3.h"
-#include "../../external/imgui/imgui_impl_sdlrenderer3.h"
-#include "../../external/SDL3/include/SDL.h"
+// #include "../../external/imgui/imgui_impl_sdl3.h"
+// #include "../../external/imgui/imgui_impl_sdlrenderer3.h"
+// #include "../../external/SDL3/include/SDL.h"
 
-#if defined(IMGUI_IMPL_OPENGL_ES2)
-#include "../../external/SDL3/include/SDL_opengles2.h"
-#else
-#include "../../external/SDL3/include/SDL_opengl.h"
-#endif
+// #if defined(IMGUI_IMPL_OPENGL_ES2)
+// #include "../../external/SDL3/include/SDL_opengles2.h"
+// #else
+// #include "../../external/SDL3/include/SDL_opengl.h"
+// #endif
 
-#include "../../external/Roboto/Roboto.h"
+// #include "../../external/Roboto/Roboto.h"
 
 #include <string>
 
