@@ -75,8 +75,9 @@ int Client::configure() {
                     continue;
                 Item::type_t type = static_cast<Item::type_t>(button["type"].get<int>());
                 string command = button["command"].get<string>();
+                string args = button.contains("args") ? button["args"] : "";
                 bool admin = button["admin"].get<bool>();
-                p.items[idx] = Item(button["label"], type, command, admin);
+                p.items[idx] = Item(button["label"], type, command, args, admin);
             }
         }
     }

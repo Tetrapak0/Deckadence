@@ -18,6 +18,8 @@
 
 #include <unistd.h>
 #include <netdb.h>
+#include <poll.h>
+#include <fcntl.h>
 
 #include <errno.h>
 #endif
@@ -48,7 +50,7 @@ typedef int socket_t;
 
 #define NX_INVALID_SOCKET -1
 
-#define nx_sock_init() ((void)0)
+#define nx_sock_init() (0)
 #define nx_sock_close(sockfd) close(sockfd)
 #define nx_sock_cleanup() {}
 #endif

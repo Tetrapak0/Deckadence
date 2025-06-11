@@ -101,7 +101,7 @@ public:
     [[nodiscard]] const DxWindow& get_window() const;
     void destroy_window();
 
-    inline static Deckastore& get();
+    static Deckastore& get();
 
     void net_query_interfaces();
     vector<NetworkInterface>& get_ifaces_ref();
