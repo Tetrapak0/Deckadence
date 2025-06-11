@@ -11,7 +11,7 @@ void Item::draw_properties() {
     ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowSize(ImVec2(480, 360));
     if (ImGui::BeginPopupModal("Button properties", nullptr, modalflags)) {
-        ImGui::Text("Label ");
+        ImGui::Text("Label: ");
         ImGui::SameLine();
         ImGui::InputText("##lbl", &this->m_label);
 
@@ -29,7 +29,7 @@ void Item::draw_properties() {
             ImGui::EndCombo();
         }
         // TODO: Customize per type
-        ImGui::Text("Command");
+        ImGui::Text("Command: ");
         ImGui::SameLine();
         ImGui::InputText("##cmd", &this->m_command);
         if (this->m_type < type_t::URL) {
@@ -51,8 +51,16 @@ void Item::draw_properties() {
                 }
             }
             if (this->m_type == type_t::CMD || this->m_type == type_t::EXE) {
+                ImGui::Text("Arguments: ");
+                ImGui::SameLine();
+                ImGui::InputText("##args", &this->m_args);
+                ImGui::TextDisabled("(i) Please separate executable and arguments into their\n\trespective fileds");
+            }
+#ifdef _WIN32 // TODO:
+            if (this->m_type == type_t::CMD || this->m_type == type_t::EXE) {
                 ImGui::Checkbox("Run with administrator rights", &this->m_admin);
             } else this->m_admin = false;
+#endif
         }
 
         ImGui::SetCursorPos(ImVec2(340, 326));
@@ -60,6 +68,7 @@ void Item::draw_properties() {
             this->m_label = this->label;
             this->m_type = this->type;
             this->m_command = this->command;
+            this->m_args = this->args;
             this->m_admin = this->admin;
             dxstore.draw_item_properties = -1;
         }
@@ -68,7 +77,8 @@ void Item::draw_properties() {
         if (ImGui::Button("Confirm", ImVec2(64, 26))) {
             this->label = this->m_label;
             this->type = this->m_type;
-            this->command =this->m_command;
+            this->command = this->m_command;
+            this->args = this->m_args;
             this->admin = this->m_admin;
             Client& parent = dxstore.retrieve_current_client();
             json& config = parent.get_config();
@@ -90,6 +100,7 @@ void Item::draw_properties() {
                             button["label"] = this->label;
                             button["type"] = static_cast<int>(this->type);
                             button["command"] = this->command;
+                            button["args"] = this->args;
                             button["admin"] = this->admin;
                         } else ++button_counter;
                     }
@@ -100,6 +111,7 @@ void Item::draw_properties() {
                             {"label", this->label},
                             {"type", static_cast<int>(this->type)},
                             {"command", this->command},
+                            {"args", this->args},
                             {"admin", this->admin}
                         };
                         jbuttons.emplace_back(button);
@@ -121,18 +133,23 @@ void Item::draw_properties() {
 void Item::execute() const {
 #ifdef _WIN32
     printf("command: %s\n", this->command.c_str());
+    // TODO: Add window show options (show, minimise, etc.)
     if ((this->type == type_t::CMD || this->type == type_t::EXE) && this->admin)
-        ShellExecuteA(nullptr, "runas", this->command.c_str(), nullptr, nullptr, SW_SHOW);
+        ShellExecuteA(nullptr, "runas", this->command.c_str(), this->args.c_str(), nullptr, SW_SHOW);
+    else if (this->type == type_t::DIR)
+        ShellExecuteA(nullptr, "explore", this->command.c_str(), nullptr, nullptr, SW_SHOW);
     else
-        ShellExecuteA(nullptr, "open", this->command.c_str(), nullptr, nullptr, SW_SHOW);
+        ShellExecuteA(nullptr, "open", this->command.c_str(), this->args.c_str(), nullptr, SW_SHOW);
 #else
     // TODO: return value
+    // TODO: SUDO
     pid_t pid = fork();
     if (pid)
         return;
 
     setsid();
 
+    // TODO: What about console applications?
     int fd = open("/dev/null", O_RDWR);
     dup2(fd, STDIN_FILENO);
     dup2(fd, STDOUT_FILENO);
@@ -140,7 +157,19 @@ void Item::execute() const {
     if (fd > 2)
         close(fd);
 
-    execl(this->command.c_str(), this->command.c_str(), (char *)NULL);
+    // TODO: FIX
+    std::istringstream argss(this->args);
+    vector<string> tokens;
+    string tok;
+    while (argss >> tok)
+        tokens.push_back(tok);
+
+    vector<char*> argv;
+    for (auto& s : tokens)
+        argv.push_back(s.data());
+    argv.push_back(nullptr);
+
+    execvp(this->command.c_str(), argv.data());
 
     _exit(0);
 #endif

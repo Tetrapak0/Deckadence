@@ -19,7 +19,9 @@ file(GLOB DxSrc ${CMAKE_CURRENT_LIST_DIR}/src/Client/*.cpp
                 ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp)
 file(GLOB ImSrc ${CMAKE_CURRENT_LIST_DIR}/external/imgui/*.cpp)
 if (WIN32)
-    file (GLOB NFDExSrc ${CMAKE_CURRENT_LIST_DIR}/external/NativeFileDIalogs-Extended/nfd_win.cpp)
+    file(GLOB NFDExSrc ${CMAKE_CURRENT_LIST_DIR}/external/NativeFileDIalogs-Extended/nfd_win.cpp)
+elseif (UNIX AND NOT APPLE)
+    file(GLOB NFDExSrc ${CMAKE_CURRENT_LIST_DIR}/external/NativeFileDialogs-Extended/nfd_portal.cpp)
 endif()
 
 add_executable(Deckadence ${DxSrc} ${ImSrc} ${NFDExSrc})
