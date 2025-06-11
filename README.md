@@ -11,7 +11,7 @@
   - [3. Configure CMake](#3-configure-cmake)
   - [4. Build](#4-build)
 ## Acquisition:
-- [Prebuilt binaries](https://github.com/Tetrapak0/NexusShell/releases)
+- [Prebuilt binaries](https://github.com/Tetrapak0/NexusShell/releases) ([Install dependencies first](#2-install-dependencies) if you are using Linux)
 - [Build it yourself](#build)
 ## Build:
 #### 1. Clone repository

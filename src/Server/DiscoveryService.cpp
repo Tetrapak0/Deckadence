@@ -86,9 +86,9 @@ int start_discovery_service() {
         setsockopt(iface.discovery_sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char*)&mreq, sizeof(mreq));
     }
 
-    char hn[MAX_HOSTNAME_LEN];
+    char hn[253]; // max hostname on Linux
     const char* un = getenv(USR_VAR);
-    gethostname(hn, MAX_HOSTNAME_LEN);
+    gethostname(hn, 253);
     while (!static_cast<int>(dxstatus)) {
         for (auto& iface : interfaces) {
             string msg = string(un) + "@" + hn + " (" + iface.addr.to_string() + ":" + std::to_string(port) + ")";

@@ -25,14 +25,16 @@ elseif (UNIX AND NOT APPLE)
 endif()
 
 add_executable(Deckadence ${DxSrc} ${ImSrc} ${NFDExSrc})
+set_property(TARGET Deckadence PROPERTY CXX_STANDARD 17)
 
 # must be ran with -DCMAKE_BUILD_TYPE=Debug
 if (${CMAKE_BUILD_TYPE} MATCHES Debug)
     target_compile_definitions(Deckadence PRIVATE _DEBUG)
 endif()
 
-target_link_libraries(Deckadence glfw3 opengl32 freetype)
 
 if (WIN32)
-    target_link_libraries(Deckadence dwmapi ws2_32 iphlpapi)
+    target_link_libraries(Deckadence glfw3 opengl32 freetype dwmapi ws2_32 iphlpapi)
+else()
+    target_link_libraries(Deckadence glfw GL freetype)
 endif()

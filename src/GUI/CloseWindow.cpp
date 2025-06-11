@@ -21,7 +21,7 @@ void gui_show_waiting_tasks() {
             if (dxstore.get_client_map().size() == 1)
                 ImGui::Text("Waiting to disconnect 1 client%s", dotdotdot.c_str());
             else
-                ImGui::Text("Waiting to disconnect %lld clients", dxstore.get_client_map().size());
+                ImGui::Text("Waiting to disconnect %llu clients", dxstore.get_client_map().size());
         }
         const static tasks& running_tasks = dxstore.get_tasks();
         if ((running_tasks & tasks::SERVER) != tasks::NONE && dxstore.get_mode() == Deckadence::mode_t::SERVER)

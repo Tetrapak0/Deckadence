@@ -5,7 +5,7 @@
     #define CFG_VAR "APPDATA"
     #define CFG_REQ "Deckadence"
     #define USR_VAR "USERNAME"
-#elif defined(__LINUX__)
+#else
     #define CFG_VAR "HOME"
     #define CFG_REQ ".config/Deckadence"
     #define USR_VAR "LOGNAME"

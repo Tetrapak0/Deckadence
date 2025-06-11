@@ -10,10 +10,6 @@ using std::string;
 
 class Profile {
     friend class Client;
-
-    string m_name = name;
-    int m_rows = rows;
-    int m_columns = columns;
 public:
     string name;
     vector<Item> items;
@@ -29,4 +25,8 @@ public:
             items.emplace_back();
         }
     }
+private:
+    string m_name = name;
+    int m_rows = rows;
+    int m_columns = columns;
 };

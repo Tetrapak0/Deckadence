@@ -10,7 +10,7 @@ socket_t create_socket(NetworkInterface iface) {
         return NX_INVALID_SOCKET;
     }
 
-    socket_t listen_socket = NULL;
+    socket_t listen_socket = NX_INVALID_SOCKET;
 
     listen_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (listen_socket == NX_INVALID_SOCKET) {
@@ -20,7 +20,7 @@ socket_t create_socket(NetworkInterface iface) {
         return NX_INVALID_SOCKET;
     }
 
-    sockaddr_in addr;
+    sockaddr_in addr{};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(Deckastore::get().get_port());
     addr.sin_addr.s_addr = inet_addr(iface.addr.to_string().c_str());
@@ -28,7 +28,6 @@ socket_t create_socket(NetworkInterface iface) {
     res = bind(listen_socket, (sockaddr*)&addr, sizeof(addr));
     if (res == NX_SOCKET_ERROR) {
         fprintf(stderr, "bind() failed.\n");
-        fprintf(stderr, "%d\n", WSAGetLastError());
         nx_sock_cleanup();
         return NX_INVALID_SOCKET;
     }

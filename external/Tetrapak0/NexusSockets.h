@@ -20,6 +20,7 @@
 #include <netdb.h>
 #include <poll.h>
 #include <fcntl.h>
+#include <ifaddrs.h>
 
 #include <errno.h>
 #endif
@@ -35,7 +36,7 @@ typedef int    socklen_t;
 #define NX_INVALID_SOCKET INVALID_SOCKET
 
 inline int nx_sock_init() {
-    WSAData wsadata;
+    WSAData wsadata{};
     return WSAStartup(MAKEWORD(2, 2), &wsadata);
 }
 #define poll(fdarray, fds, timeout) WSAPoll(fdarray, fds, timeout);

@@ -61,6 +61,7 @@ void Item::draw_properties() {
                 ImGui::Checkbox("Run with administrator rights", &this->m_admin);
             } else this->m_admin = false;
 #endif
+            // ifdef linux checkbox show console
         }
 
         ImGui::SetCursorPos(ImVec2(340, 326));
