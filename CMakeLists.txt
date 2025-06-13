@@ -27,11 +27,14 @@ endif()
 add_executable(Deckadence ${DxSrc} ${ImSrc} ${NFDExSrc})
 set_property(TARGET Deckadence PROPERTY CXX_STANDARD 17)
 
+if (UNIX AND NOT APPLE)
+    target_compile_options(Deckadence PRIVATE -DNFD_PORTAL=ON)
+endif()
+
 # must be ran with -DCMAKE_BUILD_TYPE=Debug
 if (${CMAKE_BUILD_TYPE} MATCHES Debug)
     target_compile_definitions(Deckadence PRIVATE _DEBUG)
 endif()
-
 
 if (WIN32)
     target_link_libraries(Deckadence glfw3 opengl32 freetype dwmapi ws2_32 iphlpapi)

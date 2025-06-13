@@ -3,6 +3,7 @@
 #include <string>
 
 using std::string;
+using std::vector;
 
 // TODO: Give buttons a UUID so thumbnail assignment is easier
 struct Item {
@@ -11,9 +12,16 @@ struct Item {
     type_t type = type_t::EXE;
     string command;
     string args;
+#ifndef _WIN32
+    vector<string> strargv;
+    vector<char*> argv;
+#endif
     bool admin = false;
 
     void draw_properties();
+#ifndef _WIN32
+    void args_to_argv();
+#endif
     void execute() const;
 
     Item() = default;
@@ -27,7 +35,11 @@ struct Item {
                                                              m_type(type),
                                                              m_command(command),
                                                              m_args(args),
-                                                             m_admin(admin) {}
+                                                             m_admin(admin) {
+#ifndef _WIN32
+        args_to_argv();
+#endif
+    }
 private:
     // for editor
     string m_label = label;

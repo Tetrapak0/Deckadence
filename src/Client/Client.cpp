@@ -107,7 +107,7 @@ void Client::draw_properties() {
             dxprofile.m_columns = 6;
         }
         if (dxprofile.m_rows*dxprofile.m_columns < dxprofile.rows*dxprofile.columns) {
-            ImGui::TextDisabled("/!\\ Excess elements will be preserved until client disconnect or program exit");
+            ImGui::TextDisabled("(i) Excess elements will be preserved until client disconnect or\n\tprogram exit");
         }
         ImGui::SetCursorPos(ImVec2(340, 326));
         if (ImGui::Button("Cancel", ImVec2(64, 26))) {

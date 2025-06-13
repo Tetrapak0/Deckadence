@@ -3,6 +3,7 @@
 #include <string>
 
 #include "../../external/NativeFileDIalogs-Extended/include/nfd.hpp"
+#include "../../external/NativeFileDIalogs-Extended/include/nfd_glfw3.h"
 
 using std::string;
 
