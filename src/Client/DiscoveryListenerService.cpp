@@ -40,10 +40,13 @@ void start_listening() {
     for (auto& iface : interfaces) {
         iface.discovery_sock = socket(AF_INET, SOCK_DGRAM, 0);
 
-    #ifdef _DEBUG // Allow Multi instance
+#ifdef _DEBUG // Allow Multi instance
         int reuse = 1;
         setsockopt(iface.discovery_sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&reuse, sizeof(reuse));
+    #ifndef _WIN32
+        setsockopt(iface.discovery_sock, SOL_SOCKET, SO_REUSEPORT, (const char*)&reuse, sizeof(reuse));
     #endif
+#endif
 
         struct sockaddr_in addr{};
         addr.sin_family = AF_INET;
@@ -77,6 +80,8 @@ void start_listening() {
                 if (p.revents) {
                     socklen_t addrlen = sizeof(mcast_addr);
                     int len = recvfrom(p.fd, buf, BUFSIZE, 0, (struct sockaddr*)&mcast_addr, &addrlen);
+                    if (len == NX_SOCKET_ERROR)
+                        len = 0;
                     buf[len] = '\0';
                     auto it = std::find_if(servers.begin(), servers.end(), [&buf](const ServerInfo& si){return si.full == buf;});
                     if (it != servers.end()) {

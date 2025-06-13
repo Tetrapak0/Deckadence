@@ -133,7 +133,7 @@ int client_gui_init() {
     Deckastore& dxstore = Deckastore::get();
     const status_t& dxstatus = dxstore.get_status();
     Client& self = dxstore.retrieve_current_client();
-    if (dxstore.create_window("Deckadence", {1280, 720}, -1)) {
+    if (dxstore.create_window("Deckadence", {1280, 720}, 1)) {
         dxstore.set_status(status_t::DONE);
         return -1;
     }

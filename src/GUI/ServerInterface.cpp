@@ -49,7 +49,7 @@ void gui_draw_settings() {
                 dxstore.set_discoverable(discoverable);
                 fs::path dkd_dir = get_cfg_dir();
                 fs::create_directories(dkd_dir);
-                config["server"]["discoverable"] = false;
+                config["server"]["discoverable"] = discoverable;
                 std::ofstream writer(dkd_dir / "config.json");
                 writer << config.dump(4);
                 writer.close();

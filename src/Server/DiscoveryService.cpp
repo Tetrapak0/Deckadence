@@ -26,8 +26,6 @@ vector<NetworkInterface> query_interfaces() {
                 auto* saddr = (sockaddr_in*)unicast_addr->Address.lpSockaddr;
                 char ip[INET_ADDRSTRLEN];
                 inet_ntop(AF_INET, &saddr->sin_addr, ip, sizeof(ip));
-                printf("%ls: %s\n", adapter->FriendlyName, ip);
-                printf("%ls\n", adapter->Description);
                 interfaces.emplace_back(adapter->AdapterName, ip);
             }
         }

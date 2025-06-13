@@ -202,6 +202,11 @@ void Item::execute() const {
     if (fd > 2)
         close(fd);
 
+    printf("cmd: %s\nargs: %s\n", this->command.c_str(), this->args.c_str());
+    for (auto& arg : argv) {
+        printf("arg: %s\n", arg);
+    }
+
     if (this->type == type_t::DIR || this->type == type_t::FILE || this->type == type_t::URL) {
         execlp("xdg-open", "xdg-open", this->command.c_str(), static_cast<char*>(nullptr));
     } else {
