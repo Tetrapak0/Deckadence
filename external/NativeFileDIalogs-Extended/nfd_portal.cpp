@@ -26,7 +26,7 @@
 #define getrandom(buf, sz, flags) syscall(SYS_getrandom, buf, sz, flags)
 #endif
 
-#include "nfd.h"
+#include "include/nfd.h"
 
 /*
 Define NFD_APPEND_EXTENSION if you want the file extension to be appended when missing. Linux
