@@ -56,6 +56,7 @@ vector<NetworkInterface> query_interfaces() {
 int start_discovery_service() {
     Deckastore& dxstore = Deckastore::get();
     const status_t& dxstatus = dxstore.get_status();
+    const bool& discoverable = dxstore.get_discoverable();
     dxstore.add_task(tasks::DISCOVERY);
     uint16_t port = dxstore.get_port();
     nx_sock_init();
@@ -89,7 +90,7 @@ int start_discovery_service() {
     char hn[253]; // max hostname on Linux
     const char* un = getenv(USR_VAR);
     gethostname(hn, 253);
-    while (!static_cast<int>(dxstatus)) {
+    while (!static_cast<int>(dxstatus) && discoverable) {
         for (auto& iface : interfaces) {
             string msg = string(un) + "@" + hn + " (" + iface.addr.to_string() + ":" + std::to_string(port) + ")";
             sendto(iface.discovery_sock, msg.c_str(), msg.length(), 0, (sockaddr*)&mcast_addr, sizeof(mcast_addr));

@@ -37,8 +37,8 @@ int Client::configure() {
     fs::path cfg_file(dkd_dir / (std::to_string(m_uuid)+".json"));
     if (!fs::exists(cfg_file)) {
         json schema;
-        schema[std::to_string(m_uuid)]["profiles"] = {};
-        json& profileschema = schema[std::to_string(m_uuid)]["profiles"];
+        schema["profiles"] = {};
+        json& profileschema = schema["profiles"];
         profileschema[0]["idx"] = 0;
         profileschema[0]["name"] = "Profile";
         profileschema[0]["pages"] = {};
