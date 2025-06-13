@@ -144,6 +144,8 @@ void Item::args_to_argv() {
     bool in_double_quote = false;
     bool backslash = false;
 
+    this->argv.clear();
+    this->strargv.clear();
     for (size_t i = 0; i < this->args.length(); ++i) {
         const char c = args[i];
 
@@ -152,13 +154,14 @@ void Item::args_to_argv() {
             backslash = false;
         } else if (c == '\\') {
             backslash = true;
-        } else if (c == '"' && !in_sig_quote) {
+        } else if (c == '"' && !in_sig_quote && !backslash) {
             in_double_quote = !in_double_quote;
-        } else if (c == '\'' && !in_double_quote) {
+        } else if (c == '\'' && !in_double_quote && !backslash) {
             in_sig_quote = !in_sig_quote;
-        } else if (std::isspace(c) && !in_sig_quote && !in_double_quote) {
+        } else if (std::isspace(c) && !in_sig_quote && !in_double_quote && !backslash) {
             if (!current.empty()) {
                 this->strargv.push_back(current);
+                printf("current: %s\n", current.c_str());
                 current.clear();
             }
         } else {
@@ -168,11 +171,17 @@ void Item::args_to_argv() {
 
     if (!current.empty())
         this->strargv.push_back(current);
+    printf("current: %s\n", current.c_str());
 
-    for (auto& arg : strargv)
+    for (auto& arg : strargv) {
         argv.push_back(arg.data());
+        printf("strarg: %s\n", arg.c_str());
+    }
 
     this->argv.push_back(nullptr);
+    for (auto& arg : argv) {
+        printf("arg: %s\n", arg);
+    }
 }
 #endif
 
@@ -183,7 +192,6 @@ void Item::execute() const {
         ShellExecuteA(nullptr, "runas", this->command.c_str(), this->args.c_str(), nullptr, SW_SHOW);
     else if (this->type == type_t::DIR)
         ShellExecuteA(nullptr, "explore", this->command.c_str(), nullptr, nullptr, SW_SHOW);
-
     else
         ShellExecuteA(nullptr, "open", this->command.c_str(), this->args.c_str(), nullptr, SW_SHOW);
 #else
@@ -200,16 +208,23 @@ void Item::execute() const {
     setsid();
 
     // TODO: What about console applications?
-    int fd = open("/dev/null", O_RDWR);
-    dup2(fd, STDIN_FILENO);
-    dup2(fd, STDOUT_FILENO);
-    dup2(fd, STDERR_FILENO);
-    if (fd > 2)
-        close(fd);
+    // int fd = open("/dev/null", O_RDWR);
+    // dup2(fd, STDIN_FILENO);
+    // dup2(fd, STDOUT_FILENO);
+    // dup2(fd, STDERR_FILENO);
+    // if (fd > 2)
+    //     close(fd);
+
+    printf("cmd: %s\nargs: %s\n", this->command.c_str(), this->args.c_str());
+    for (auto& arg : argv) {
+        printf("arg: %s\n", arg);
+    }
 
     if (this->type == type_t::DIR || this->type == type_t::FILE || this->type == type_t::URL) {
+        printf("anything else\n");
         execlp("xdg-open", "xdg-open", this->command.c_str(), static_cast<char*>(nullptr));
     } else {
+        printf("program\n");
         execvp(this->command.c_str(), this->argv.data());
     }
 
