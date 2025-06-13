@@ -137,7 +137,7 @@ void Item::draw_properties() {
 
 #ifndef _WIN32
 void Item::args_to_argv() {
-    this->argv.push_back(this->command.c_str());
+    this->argv.push_back(this->command.data());
 
     string current;
     bool in_sig_quote = false;
