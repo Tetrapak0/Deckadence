@@ -18,19 +18,15 @@ file(GLOB DxSrc ${CMAKE_CURRENT_LIST_DIR}/src/Client/*.cpp
                 ${CMAKE_CURRENT_LIST_DIR}/src/Utilities/*.cpp
                 ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp)
 file(GLOB ImSrc ${CMAKE_CURRENT_LIST_DIR}/external/imgui/*.cpp)
+
 if (WIN32)
-    file(GLOB NFDExSrc ${CMAKE_CURRENT_LIST_DIR}/external/NativeFileDIalogs-Extended/nfd_win.cpp)
-else()
+    file(GLOB NFDExSrc ${CMAKE_CURRENT_LIST_DIR}/external/NativeFileDialogs-Extended/nfd_win.cpp)
+elseif (UNIX AND NOT APPLE)
     file(GLOB NFDExSrc ${CMAKE_CURRENT_LIST_DIR}/external/NativeFileDialogs-Extended/nfd_portal.cpp)
 endif()
 
 add_executable(Deckadence ${DxSrc} ${ImSrc} ${NFDExSrc})
 set_property(TARGET Deckadence PROPERTY CXX_STANDARD 17)
-
-if (WIN32)
-else()
-    target_compile_options(Deckadence PRIVATE -DNFD_PORTAL=ON)
-endif()
 
 # must be ran with -DCMAKE_BUILD_TYPE=Debug
 if (${CMAKE_BUILD_TYPE} MATCHES Debug)
@@ -39,6 +35,9 @@ endif()
 
 if (WIN32)
     target_link_libraries(Deckadence glfw3 opengl32 freetype dwmapi ws2_32 iphlpapi)
-else()
-    target_link_libraries(Deckadence glfw GL freetype dbus-1)
+elseif (UNIX AND NOT APPLE)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(DBUS REQUIRED dbus-1)
+    target_include_directories(Deckadence PRIVATE ${DBUS_INCLUDE_DIRS})
+    target_link_libraries(Deckadence glfw GL freetype ${DBUS_LINK_LIBRARIES})
 endif()
