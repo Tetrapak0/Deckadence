@@ -55,6 +55,7 @@ void Item::draw_properties() {
                 ImGui::SameLine();
                 ImGui::InputText("##args", &this->m_args);
                 ImGui::TextDisabled("(i) Please separate executable and arguments into their\n\trespective fileds");
+                ImGui::TextDisabled("(i) Arguments that contain spaces (i.e. paths) should be\n\tput in quotes");
             }
 #ifdef _WIN32 // TODO:
             if (this->m_type == type_t::CMD || this->m_type == type_t::EXE) {
@@ -124,6 +125,9 @@ void Item::draw_properties() {
             writer << config.dump(4);
             writer.close();
             send(parent.socket, string(string(1, DX_CONFIG_BYTE) + config.dump()).c_str(), config.dump().length()+1, 0);
+#ifndef _WIN32
+            this->args_to_argv();
+#endif
             dxstore.draw_item_properties = -1;
         }
         ImGui::EndDisabled();
@@ -131,9 +135,50 @@ void Item::draw_properties() {
     }
 }
 
+#ifndef _WIN32
+void Item::args_to_argv() {
+    this->argv.push_back(this->command.c_str());
+
+    string current;
+    bool in_sig_quote = false;
+    bool in_double_quote = false;
+    bool backslash = false;
+
+    for (size_t i = 0; i < this->args.length(); ++i) {
+        const char c = args[i];
+
+        if (backslash) {
+            current += c;
+            backslash = false;
+        } else if (c == '\\') {
+            backslash = true;
+        } else if (c == '"' && !in_sig_quote) {
+            in_double_quote = !in_double_quote;
+        } else if (c == '\'' && !in_double_quote) {
+            in_sig_quote = !in_sig_quote;
+        } else if (std::isspace(c) && !in_sig_quote && !in_double_quote) {
+            if (!current.empty()) {
+                this->strargv.push_back(current);
+                current.clear();
+            }
+        } else {
+            current += c;
+        }
+    }
+
+    if (!current.empty())
+        this->strargv.push_back(current);
+
+    for (auto& arg : strargv)
+        argv.push_back(arg.c_str());
+
+    this->argv.push_back(nullptr);
+}
+#endif
+
 void Item::execute() const {
 #ifdef _WIN32
-    printf("command: %s\n", this->command.c_str());
+    printf("command: %s, args: %s\n", this->command.c_str(), this->args.c_str());
     // TODO: Add window show options (show, minimise, etc.)
     if ((this->type == type_t::CMD || this->type == type_t::EXE) && this->admin)
         ShellExecuteA(nullptr, "runas", this->command.c_str(), this->args.c_str(), nullptr, SW_SHOW);
@@ -158,19 +203,11 @@ void Item::execute() const {
     if (fd > 2)
         close(fd);
 
-    // TODO: FIX
-    std::istringstream argss(this->args);
-    vector<string> tokens;
-    string tok;
-    while (argss >> tok)
-        tokens.push_back(tok);
-
-    vector<char*> argv;
-    for (auto& s : tokens)
-        argv.push_back(s.data());
-    argv.push_back(nullptr);
-
-    execvp(this->command.c_str(), argv.data());
+    if (this->type == type_t::DIR || this->type == type_t::FILE || this->type == type_t::URL) {
+        execlp("xdg-open", "xdg-open", this->command.c_str(), static_cast<char*>(nullptr));
+    } else {
+        execvp(this->command.c_str(), this->argv.data());
+    }
 
     _exit(0);
 #endif

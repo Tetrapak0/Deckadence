@@ -41,7 +41,10 @@ int begin_comm_loop(uint64_t uuid) {
             } case NX_SOCKET_ERROR: {
                 break;
             } default: {
-                printf("Received message from %llu\n", client.get_uuid());
+                if (client.get_nickname().empty())
+                    printf("Received message from %llu\n", client.get_uuid());
+                else
+                    printf("Received message from %s\n", client.get_nickname().c_str());
                 // TODO: change length of recv
                 client.res = recv(client.socket, buf, 1024, NULL);
                 if (client.res > 0) {
@@ -57,7 +60,10 @@ int begin_comm_loop(uint64_t uuid) {
     if (static_cast<int>(dxstatus))
         reason = "Server closed.";
     dxstore.disconnect_client(client.get_uuid(), reason);
-    printf("%llu disconnected.\n", client.get_uuid());
+    if (client.get_nickname().empty())
+        printf("%llu disconnected.\n", client.get_uuid());
+    else
+       printf("%s disconnected.\n", client.get_nickname().c_str());
     return 0;
 }
 

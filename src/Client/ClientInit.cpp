@@ -26,6 +26,8 @@ void begin_receiver_loop() {
             break;
         }
         dxclient.res = recv(dxclient.socket, buf.data(), buf.capacity(), 0);
+        if (dxclient.res == NX_INVALID_SOCKET)
+            dxclient.res = 0;
         buf[dxclient.res] = '\0';
         switch (buf[0]) {
             case DX_CONFIG_BYTE: {
@@ -41,6 +43,7 @@ void begin_receiver_loop() {
                 break;
             } case DX_DISCONNECT_BYTE: {
 
+                dxclient.res = 0;
                 break;
             } default: {
                 break;
