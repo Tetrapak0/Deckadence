@@ -183,9 +183,14 @@ void Item::execute() const {
         ShellExecuteA(nullptr, "runas", this->command.c_str(), this->args.c_str(), nullptr, SW_SHOW);
     else if (this->type == type_t::DIR)
         ShellExecuteA(nullptr, "explore", this->command.c_str(), nullptr, nullptr, SW_SHOW);
+
     else
         ShellExecuteA(nullptr, "open", this->command.c_str(), this->args.c_str(), nullptr, SW_SHOW);
 #else
+    printf("cmd: %s\nargs: %s\n", this->command.c_str(), this->args.c_str());
+    for (auto& arg : this->argv) {
+        printf("arg: %s\n", arg);
+    }
     // TODO: return value
     // TODO: SUDO
     pid_t pid = fork();
