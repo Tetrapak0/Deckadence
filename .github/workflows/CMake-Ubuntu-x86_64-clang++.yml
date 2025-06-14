@@ -18,12 +18,14 @@ jobs:
       run: |
            sudo apt update -y
            sudo apt upgrade -y
-           sudo apt install gcc build-essential cmake libfreetype-dev libglfw3 clang dbus
+           sudo apt install gcc build-essential cmake libfreetype-dev libglfw3 clang libdbus-1-dev
     - name: Configure CMake
       run: |
            cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config MinSizeRel --parallel
+      run: |
+           cmake --build ${{github.workspace}}/build --config MinSizeRel --parallel
+           ls -R
 
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v4.6.2
