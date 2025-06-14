@@ -1,0 +1,35 @@
+# This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
+# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
+name: CMake on Linux x86_64 using clang++
+
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "*" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Configure Packages
+      run: |
+           sudo apt update -y
+           sudo apt upgrade -y
+           sudo apt install gcc build-essential cmake libfreetype-dev libglfw3-dev clang libdbus-1-dev libglu1-mesa-dev libgl1-mesa-dev libx11-dev libxrandr-dev libwayland-dev
+    - name: Configure CMake
+      run: |
+           cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang
+    - name: Build
+      run: |
+           cmake --build ${{github.workspace}}/build --config MinSizeRel --parallel
+           ls -la
+
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v4.6.2
+      with:
+        name: Deckadence-linux-x86_64
+        path: ${{github.workspace}}/build/Deckadence
+        if-no-files-found: error
