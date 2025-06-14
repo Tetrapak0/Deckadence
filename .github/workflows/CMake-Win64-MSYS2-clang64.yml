@@ -31,5 +31,5 @@ jobs:
       uses: actions/upload-artifact@v4.6.2
       with:
         name: Deckadence.exe
-        path: ./build/Deckadence.exe
+        path: ${{github.workspace}}/build/Deckadence.exe
         if-no-files-found: error
