@@ -18,7 +18,7 @@ jobs:
       run: |
            sudo apt update -y
            sudo apt upgrade -y
-           sudo apt install gcc build-essential cmake libfreetype-dev libglfw3 clang libdbus-1-dev libglu1-mesa-dev libgl1-mesa-dev libx11-dev
+           sudo apt install gcc build-essential cmake libfreetype-dev libglfw3 clang libdbus-1-dev libglu1-mesa-dev libgl1-mesa-dev libx11-dev libxrandr-dev libwayland-dev
     - name: Configure CMake
       run: |
            cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang
