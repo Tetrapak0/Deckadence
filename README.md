@@ -11,7 +11,7 @@
   - [3. Configure CMake](#3-configure-cmake)
   - [4. Build](#4-build)
 ## Acquisition:
-- [Prebuilt binaries](https://github.com/Tetrapak0/NexusShell/releases) ([Install dependencies first](#2-install-dependencies) if you are using Linux)
+- [Prebuilt binaries](https://github.com/Tetrapak0/NexusShell/releases) ([Install dependencies first](#2-install-dependencies))
 - [Build it yourself](#build)
 ## Build:
 #### 1. Clone repository
@@ -27,9 +27,9 @@
 #### 2. Install dependencies
 #### 2.1 Linux
 >During development for Linux, Deckadence is only built using clang++.
-- Arch-based: `sudo pacman -Syyu freetype2 cmake base-devel clang glfw dbus mesa libx11`
-- Debian-based: `sudo apt update && sudo apt install libfreetype-dev cmake build-essential clang libglfw3 libdbus-1-dev libgl1-dev libglu1-dev libx11-dev`
-- Fedora-based: `sudo dnf upgrade --refresh && sudo dnf install freetype-dev cmake clang glfw dbus dbus-devel mesa-libGL-devel mesa-libGLU-devel libx11-devel && sudo dnf groupinstall "Development Tools" "Development Libraries"`
+- Arch-based: `sudo pacman -Syyu freetype2 cmake base-devel clang glfw dbus mesa libx11 libxrandr wayland`
+- Debian-based: `sudo apt update && sudo apt install libfreetype-dev cmake build-essential clang libglfw3-dev libdbus-1-dev libgl1-dev libglu1-dev libx11-dev libxrandr-dev libwayland-dev`
+- Fedora-based: `sudo dnf upgrade --refresh && sudo dnf install freetype-dev cmake clang glfw-devel dbus dbus-devel mesa-libGL-devel mesa-libGLU-devel libx11-devel libxrandr-devel wayland-devel && sudo dnf groupinstall "Development Tools" "Development Libraries"`
 #### 2.2 Windows
 > ⚠ MSVC is not supported because Microsoft C++ is completely and utterly repugnant and should be EOL'd. Even their devs hate using it. It's true. ⚠
 >
