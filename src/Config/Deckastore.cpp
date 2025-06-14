@@ -54,7 +54,7 @@ void Deckastore::destroy_window() {
     window.destroy();
 }
 
-inline Deckastore& Deckastore::get() {
+Deckastore& Deckastore::get() {
     static Deckastore self;
     return self;
 }

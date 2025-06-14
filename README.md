@@ -27,9 +27,9 @@
 #### 2. Install dependencies
 #### 2.1 Linux
 >During development for Linux, Deckadence is only built using clang++.
-- Arch-based: `sudo pacman -Syyu freetype2 cmake base-devel clang glfw`
-- Debian-based: `sudo apt update && sudo apt install libfreetype-dev cmake build-essential clang libglfw3`
-- Fedora-based: `sudo dnf upgrade --refresh && sudo dnf install freetype-dev cmake clang glfw && sudo dnf groupinstall "Development Tools" "Development Libraries"`
+- Arch-based: `sudo pacman -Syyu freetype2 cmake base-devel clang glfw dbus`
+- Debian-based: `sudo apt update && sudo apt install libfreetype-dev cmake build-essential clang libglfw3 dbus`
+- Fedora-based: `sudo dnf upgrade --refresh && sudo dnf install freetype-dev cmake clang glfw dbus dbus-devel && sudo dnf groupinstall "Development Tools" "Development Libraries"`
 #### 2.2 Windows
 > ⚠ MSVC is not supported because Microsoft C++ is completely and utterly repugnant and should be EOL'd. Even their devs hate using it. It's true. ⚠
 >
