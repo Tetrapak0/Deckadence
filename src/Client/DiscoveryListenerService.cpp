@@ -50,7 +50,7 @@ void start_listening() {
 
         struct sockaddr_in addr{};
         addr.sin_family = AF_INET;
-        addr.sin_addr.s_addr = inet_addr(iface.addr.to_string().c_str());
+        addr.sin_addr.s_addr = htonl(INADDR_ANY);
         addr.sin_port = htons(MCAST_PORT);
         struct ip_mreq mreq{};
         mreq.imr_multiaddr.s_addr = inet_addr(MCAST_IP);

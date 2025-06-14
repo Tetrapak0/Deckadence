@@ -50,20 +50,20 @@ void Item::draw_properties() {
                         m_command = res;
                 }
             }
-            if (this->m_type == type_t::CMD || this->m_type == type_t::EXE) {
-                ImGui::Text("Arguments: ");
-                ImGui::SameLine();
-                ImGui::InputText("##args", &this->m_args);
-                ImGui::TextDisabled("(i) Please separate executable and arguments into their\n\trespective fileds");
-                ImGui::TextDisabled("(i) Arguments that contain spaces (i.e. paths) should be\n\tput in quotes");
-            }
-#ifdef _WIN32 // TODO:
-            if (this->m_type == type_t::CMD || this->m_type == type_t::EXE) {
-                ImGui::Checkbox("Run with administrator rights", &this->m_admin);
-            } else this->m_admin = false;
-#endif
-            // ifdef linux checkbox show console
         }
+        if (this->m_type == type_t::CMD || this->m_type == type_t::EXE) {
+            ImGui::Text("Arguments: ");
+            ImGui::SameLine();
+            ImGui::InputText("##args", &this->m_args);
+            ImGui::TextDisabled("(i) Please separate executable and arguments into their\n\trespective fileds");
+            ImGui::TextDisabled("(i) Arguments that contain spaces (i.e. paths) should be\n\tput in quotes");
+        }
+#ifdef _WIN32 // TODO:
+        if (this->m_type == type_t::CMD || this->m_type == type_t::EXE) {
+            ImGui::Checkbox("Run with administrator rights", &this->m_admin);
+        } else this->m_admin = false;
+#endif
+        // TODO: ifdef linux checkbox show console
 
         ImGui::SetCursorPos(ImVec2(340, 326));
         if (ImGui::Button("Cancel", ImVec2(64, 26))) {
@@ -161,7 +161,6 @@ void Item::args_to_argv() {
         } else if (std::isspace(c) && !in_sig_quote && !in_double_quote && !backslash) {
             if (!current.empty()) {
                 this->strargv.push_back(current);
-                printf("current: %s\n", current.c_str());
                 current.clear();
             }
         } else {
@@ -169,19 +168,15 @@ void Item::args_to_argv() {
         }
     }
 
-    if (!current.empty())
+    if (!current.empty()) {
         this->strargv.push_back(current);
-    printf("current: %s\n", current.c_str());
+    }
 
     for (auto& arg : strargv) {
         argv.push_back(arg.data());
-        printf("strarg: %s\n", arg.c_str());
     }
 
     this->argv.push_back(nullptr);
-    for (auto& arg : argv) {
-        printf("arg: %s\n", arg);
-    }
 }
 #endif
 
@@ -195,36 +190,26 @@ void Item::execute() const {
     else
         ShellExecuteA(nullptr, "open", this->command.c_str(), this->args.c_str(), nullptr, SW_SHOW);
 #else
-    printf("cmd: %s\nargs: %s\n", this->command.c_str(), this->args.c_str());
-    for (auto& arg : this->argv) {
-        printf("arg: %s\n", arg);
-    }
     // TODO: return value
     // TODO: SUDO
     pid_t pid = fork();
-    if (pid)
+    if (pid) {
         return;
+    }
 
     setsid();
 
     // TODO: What about console applications?
-    // int fd = open("/dev/null", O_RDWR);
-    // dup2(fd, STDIN_FILENO);
-    // dup2(fd, STDOUT_FILENO);
-    // dup2(fd, STDERR_FILENO);
-    // if (fd > 2)
-    //     close(fd);
-
-    printf("cmd: %s\nargs: %s\n", this->command.c_str(), this->args.c_str());
-    for (auto& arg : argv) {
-        printf("arg: %s\n", arg);
-    }
+    int fd = open("/dev/null", O_RDWR);
+    dup2(fd, STDIN_FILENO);
+    dup2(fd, STDOUT_FILENO);
+    dup2(fd, STDERR_FILENO);
+    if (fd > 2)
+        close(fd);
 
     if (this->type == type_t::DIR || this->type == type_t::FILE || this->type == type_t::URL) {
-        printf("anything else\n");
         execlp("xdg-open", "xdg-open", this->command.c_str(), static_cast<char*>(nullptr));
     } else {
-        printf("program\n");
         execvp(this->command.c_str(), this->argv.data());
     }
 

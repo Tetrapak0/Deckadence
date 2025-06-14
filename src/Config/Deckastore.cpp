@@ -137,6 +137,10 @@ void Deckastore::disconnect_client(const uint64_t uuid, const string& reason) {
         nx_sock_close(c.socket);
         c.socket = NX_INVALID_SOCKET;
     }
+    if (c.get_nickname().empty())
+        printf("%llu disconnected.\n", c.get_uuid());
+    else
+       printf("%s disconnected.\n", c.get_nickname().c_str());
     erase_client(uuid);
     lock.unlock();
 }

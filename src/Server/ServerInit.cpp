@@ -60,10 +60,6 @@ int begin_comm_loop(uint64_t uuid) {
     if (static_cast<int>(dxstatus))
         reason = "Server closed.";
     dxstore.disconnect_client(client.get_uuid(), reason);
-    if (client.get_nickname().empty())
-        printf("%llu disconnected.\n", client.get_uuid());
-    else
-       printf("%s disconnected.\n", client.get_nickname().c_str());
     return 0;
 }
 
