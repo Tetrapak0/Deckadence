@@ -27,11 +27,11 @@ jobs:
     - name: Build
       run: |
            cmake --build ${{github.workspace}}/build --config MinSizeRel --parallel
-           ls -R
+           ls -la
 
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v4.6.2
       with:
         name: Deckadence.exe
-        path: ${{github.workspace}}/build/Deckadence.exe
+        path: ${{github.workspace}}/aDeckadenceDeckadence/build/Deckadence.exe # wtf?
         if-no-files-found: error
