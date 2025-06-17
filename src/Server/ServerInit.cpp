@@ -29,7 +29,7 @@ int begin_comm_loop(uint64_t uuid) {
     {
         // TODO: Truncate commands and types from message
         string msg = string(1, DX_CONFIG_BYTE) + client.get_config().dump();
-        send(client.socket, msg.c_str(), msg.length(), 0);
+        send(client.socket, msg.c_str(), msg.length()+1, 0);
     }
 
     pollfd pole{client.socket, POLLIN};
@@ -82,7 +82,7 @@ Client accept_client(socket_t sock) {
         return Client(NULL, client_socket);
     }
     char buf[20];
-    if (int res = recv(client_socket, buf, 20, NULL); res > 0) {
+    if (int res = recv(client_socket, buf, 21, NULL); res > 0) {
         // TODO: Implement a blacklist feature
         buf[res] = '\0';
         uint64_t uuid = strtoull(buf, nullptr, 10);
@@ -92,7 +92,6 @@ Client accept_client(socket_t sock) {
             return nclient;
         }
     }
-    // TODO: After multiple failures abort program
     nx_sock_close(client_socket);
     Client nclient(NULL, NX_INVALID_SOCKET);
     return nclient;

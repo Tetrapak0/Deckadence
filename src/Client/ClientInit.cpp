@@ -17,7 +17,7 @@ void begin_receiver_loop() {
     const status_t& dxstatus = dxstore.get_status();
     Client& dxclient = dxstore.retrieve_current_client();
     string buf(1024*256, '\0');
-    pollfd pole{dxclient.socket, POLLIN};
+    pollfd pole{dxclient.socket, POLLIN, 0};
     do {
         int res = poll(&pole, 1, 2000);
         if (!res) {
@@ -26,8 +26,10 @@ void begin_receiver_loop() {
             break;
         }
         dxclient.res = recv(dxclient.socket, buf.data(), buf.capacity(), 0);
-        if (dxclient.res == NX_INVALID_SOCKET)
+        if (dxclient.res == NX_INVALID_SOCKET) {
             dxclient.res = 0;
+            break;
+        }
         buf[dxclient.res] = '\0';
         switch (buf[0]) {
             case DX_CONFIG_BYTE: {
@@ -35,7 +37,7 @@ void begin_receiver_loop() {
                 fs::path dkd_dir = get_cfg_dir();
                 fs::create_directories(dkd_dir);
                 std::ofstream writer(dkd_dir / (std::to_string(dxclient.get_uuid()) + ".json"));
-                json cfg = json::parse(buf.substr(1, dxclient.res-1));
+                json cfg = json::parse(buf.substr(1, buf.length()-1));
                 writer << cfg.dump(4);
                 writer.close();
                 // TODO: pass json to .configure(); overload
@@ -49,6 +51,8 @@ void begin_receiver_loop() {
                 break;
             }
         }
+        buf.clear();
+        buf.resize(1024*256, '\0');
     } while (!static_cast<int>(dxstatus) && dxclient.res > 0 && dxclient.send_res > 0);
     dxclient.res = 1;
     dxclient.send_res = 1;

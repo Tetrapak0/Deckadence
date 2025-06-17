@@ -112,7 +112,7 @@ void draw_connect_dialog() {
                 int res = connect(sock, (sockaddr*)&hint, sizeof(hint));
                 if (res != NX_SOCKET_ERROR) {
                     self.socket = sock;
-                    res = send(self.socket, std::to_string(self.get_uuid()).c_str(), 9, 0);
+                    res = send(self.socket, std::to_string(self.get_uuid()).c_str(), std::to_string(self.get_uuid()).length()+1, 0);
                     if (!manual_connect) {
                         port = porttmp;
                         strncpy(ip_buffer, ipv4tmp, strlen(ipv4tmp));

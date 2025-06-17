@@ -119,9 +119,11 @@ void Deckastore::insert_client(uint64_t uuid, socket_t socket) {
 }
 // TODO: Move to client class
 void Deckastore::disconnect_client(const uint64_t uuid, const string& reason) {
-    if (clients.find(uuid) == clients.end())
-        return;
     lock.lock();
+    if (clients.find(uuid) == clients.end()) {
+        lock.unlock();
+        return;
+    }
     Client& c = retrieve_client(uuid);
     if (selected_client_id == c.get_uuid()) {
         // TODO: Add offline config editor; when client not connected
