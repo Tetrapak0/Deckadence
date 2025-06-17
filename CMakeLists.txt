@@ -25,6 +25,10 @@ elseif (UNIX AND NOT APPLE)
     file(GLOB NFDExSrc ${CMAKE_CURRENT_LIST_DIR}/external/NativeFileDialogs-Extended/nfd_portal.cpp)
 endif()
 
+file(GLOB_RECURSE NoWarnCpp ${CMAKE_CURRENT_LIST_DIR}/external/*.cpp)
+
+set_source_files_properties(${NoWarnCpp} PROPERTIES COMPILE_FLAGS "-w")
+
 add_executable(Deckadence ${DxSrc} ${ImSrc} ${NFDExSrc})
 set_property(TARGET Deckadence PROPERTY CXX_STANDARD 17)
 

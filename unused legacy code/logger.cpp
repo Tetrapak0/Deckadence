@@ -1,4 +1,4 @@
-#ifndef _DEBUG // TODO: Check for _PROD instead
+#ifndef _DEBUG
 #include "../../include/Header.hpp"
 
 #include <ctime>

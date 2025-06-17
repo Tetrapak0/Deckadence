@@ -15,11 +15,10 @@ string nfd_open_file() {
     const DxWindow& dxwindow = Deckastore::get().get_window();
     nfdwindowhandle_t nfdwh{};
     NFD_GetNativeWindowFromGLFWWindow(dxwindow.get(), &nfdwh);
-    nfdfilteritem_t nfdfilter[1] = {{"All Files", "*"}};
     nfdopendialogu8args_t nfdargs{};
     nfdargs.defaultPath = nullptr;
-    nfdargs.filterList = nfdfilter;
-    nfdargs.filterCount = 1;
+    nfdargs.filterList = nullptr;
+    nfdargs.filterCount = 0;
     nfdargs.parentWindow = nfdwh;
     nfdchar_t* out = nullptr;
     nfdresult_t res = NFD_OpenDialogU8_With(&out, &nfdargs);
