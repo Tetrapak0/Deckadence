@@ -29,7 +29,7 @@ int begin_comm_loop(uint64_t uuid) {
     {
         // TODO: Truncate commands and types from message
         string msg = string(1, DX_CONFIG_BYTE) + client.get_config().dump();
-        send(client.socket, msg.c_str(), msg.length(), 0);
+        send(client.socket, msg.c_str(), msg.length()+1, 0);
     }
 
     pollfd pole{client.socket, POLLIN};
