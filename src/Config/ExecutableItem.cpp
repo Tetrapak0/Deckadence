@@ -212,7 +212,7 @@ void ExecutableItem::execute() {
 
             if (!system(string("command -v " + terminal + " > /dev/null 2>&1").c_str())) {
                 command = terminal;
-                _argv.push_back(terminal.data());
+                _argv.push_back(vector<char*>::value_type(terminal.data()));
                 _argv.push_back("-e");
                 break;
             }
