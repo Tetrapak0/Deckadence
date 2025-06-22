@@ -21,6 +21,7 @@
 #include <poll.h>
 #include <fcntl.h>
 #include <ifaddrs.h>
+#include <net/if.h>
 
 #include <errno.h>
 #endif

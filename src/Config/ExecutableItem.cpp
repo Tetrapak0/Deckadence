@@ -193,11 +193,11 @@ void ExecutableItem::execute() {
     if (fd > 2)
         close(fd);
 
-    vector<char*> argv;
-    argv.reserve(this->argv.size() + 1);
+    vector<char*> _argv;
+    _argv.reserve(this->argv.size() + 4);
     string command = this->command;
     if (this->console) {
-        static std::vector<std::string> terminals = {
+        vector<string> terminals = {
             std::getenv("TERMINAL") ? std::getenv("TERMINAL") : "",
             "x-terminal-emulator", "mate-terminal", "gnome-terminal", "terminator",
             "xfce4-terminal", "urxvt", "rxvt", "termit", "Eterm", "aterm",
@@ -212,8 +212,8 @@ void ExecutableItem::execute() {
 
             if (!system(string("command -v " + terminal + " > /dev/null 2>&1").c_str())) {
                 command = terminal;
-                argv.push_back(terminal.c_str());
-                argv.push_back("-e");
+                _argv.push_back(terminal.data());
+                _argv.push_back("-e");
                 break;
             }
         }
@@ -223,12 +223,12 @@ void ExecutableItem::execute() {
     // if (this->admin) {
     //     if (command == this->command)
     //         command = "xdg-su";
-    //     argv.push_back("xdg-su");
+    //     _argv.push_back("xdg-su");
     // }
-    argv.insert(argv.end(), this->argv.begin(), this->argv.end());
+    _argv.insert(_argv.end(), this->argv.begin(), this->argv.end());
     if (!this->cwd.empty())
         chdir(this->cwd.c_str());
-    execvp(command.c_str(), argv.data());
+    execvp(command.c_str(), _argv.data());
 
     _exit(0);
 #endif
