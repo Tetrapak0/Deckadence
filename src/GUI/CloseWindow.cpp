@@ -49,10 +49,11 @@ void gui_show_waiting_tasks() {
     }
 }
 
-void gui_close_dialog(GLFWwindow* window) {
+void gui_close_dialog() {
     static Deckastore& dxstore = Deckastore::get();
+    static DxWindow& dxwindow = dxstore.get_window();
     if (dxstore.get_status() != status_t::RUNNING) {
-        glfwSetWindowShouldClose(window, GLFW_FALSE);
+        glfwSetWindowShouldClose(dxwindow.get(), GLFW_FALSE);
         return;
     }
     ImGui::OpenPopup("Close Deckadence");
@@ -66,26 +67,25 @@ void gui_close_dialog(GLFWwindow* window) {
             ImGui::RadioButton("Restart Deckadence", &close_type, 2);
             // static bool dontaskagain = true;
             // ImGui::Checkbox("Don't ask again", &dontaskagain);
-            ImGui::SetCursorPos(ImVec2(100,146));
+            ImGui::SetCursorPos(ImVec2(100, 146));
             if (ImGui::Button("Cancel", ImVec2(64, 26))) {
-                glfwSetWindowShouldClose(window, GLFW_FALSE);
+                glfwSetWindowShouldClose(dxwindow.get(), GLFW_FALSE);
             }
             ImGui::SameLine();
-            ImGui::SetCursorPosX(168);
             if (ImGui::Button("Confirm")) {
                 if (!close_type) {
-                    glfwHideWindow(window);
+                    dxstore.get_window().hide();
                 } else if (close_type == 1) {
                     dxstore.set_status(status_t::EXITING);
                 } else if (close_type == 2) {
                     dxstore.set_status(status_t::RESTART);
+                    close_type = 0;
                 }
-                close_type = 0;
-                glfwSetWindowShouldClose(window, GLFW_FALSE);
+                glfwSetWindowShouldClose(dxwindow.get(), GLFW_FALSE);
             }
         } else {
             dxstore.set_status(status_t::EXITING);
-            glfwSetWindowShouldClose(window, GLFW_FALSE);
+            glfwSetWindowShouldClose(dxwindow.get(), GLFW_FALSE);
         }
         ImGui::EndPopup();
     }

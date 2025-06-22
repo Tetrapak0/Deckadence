@@ -2,6 +2,23 @@
 #include "../../include/Config/Config.hpp"
 #include "../../include/GUI/GUI.hpp"
 
+Client::Client(const uint64_t uuid, const socket_t socket) : m_uuid(uuid), socket(socket) {
+    if (configure()) {
+        if (this->socket != NX_INVALID_SOCKET) {
+            nx_sock_close(this->socket);
+            this->socket = NX_INVALID_SOCKET;
+        }
+    }/* else {
+        if (this->socket != NX_INVALID_SOCKET) {
+            // TODO: Truncate redundant info from message
+            string msg = string(1, DX_CONFIG_BYTE) + get_config().dump();
+            send(socket, msg.c_str(), msg.length()+1, 0);
+        }
+    }*/
+    // TODO: Check via hash
+    // TODO: if client has config and server doesn't, show a dialog and send config to server
+}
+
 [[nodiscard]] uint64_t Client::get_uuid() const {
     return m_uuid;
 }
@@ -16,16 +33,15 @@ void Client::set_nickname(const string& nickname) {
 }
 
 [[nodiscard]] Profile& Client::get_current_profile_ref() {
-    return profiles[current_profile];
+    return *profiles[current_profile];
 }
 
 json& Client::get_config() {
     return this->config;
 }
 
-
 int Client::configure() {
-    this->lock.lock();
+    this->lock.lock(); // TODO: Change to main mutex or implement this one better
     profiles.clear();
     fs::path dkd_dir = get_cfg_dir();
     //auto lwt = std::filesystem::last_write_time(dkd_dir / (std::to_string(m_uuid)+".json"));
@@ -37,16 +53,16 @@ int Client::configure() {
     fs::path cfg_file(dkd_dir / (std::to_string(m_uuid)+".json"));
     if (!fs::exists(cfg_file)) {
         json schema;
-        schema["profiles"] = {};
+        schema["profiles"] = json::array();
         json& profileschema = schema["profiles"];
         profileschema[0]["idx"] = 0;
         profileschema[0]["name"] = "Profile";
-        profileschema[0]["pages"] = {};
+        profileschema[0]["pages"] = json::array();
         profileschema[0]["rows"] = 4;
         profileschema[0]["columns"] = 6;
         json& pageschema = profileschema[0]["pages"];
         pageschema[0]["idx"] = 0;
-        pageschema[0]["buttons"] = {};
+        pageschema[0]["items"] = json::array();
         std::ofstream writer(cfg_file);
         writer << schema.dump(4);
         writer.close();
@@ -55,34 +71,33 @@ int Client::configure() {
     this->config = json::parse(reader);
     // TODO: JSON error checking
     reader.close();
-    // TODO: Move to respective constructors, just pass json
-    // TODO: Construct JSON from classes, don't store it.
     if (config.contains("nickname")) {
         this->nickname = config["nickname"];
+        this->m_nickname = nickname;
     }
-    for (auto& profile : this->config["profiles"])
-        profiles.emplace_back();
+    profiles.resize(this->config["profiles"].size());
     for (auto& profile : this->config["profiles"]) {
         int profile_index = profile["idx"].get<int>();
-        // TODO: Delete if false
-        if (profile_index < profiles.size())
-            profiles[profile_index] = Profile(profile["name"].get<string>(), profile["rows"].get<int>(), profile["columns"].get<int>());
-        Profile& p = profiles[profile_index];
-        for (auto& page : profile["pages"]) {
-            for (auto& button : page["buttons"]) {
-                int idx = button["idx"].get<int>();
-                if (idx > p.rows*p.columns || idx < 0)
-                    continue;
-                Item::type_t type = static_cast<Item::type_t>(button["type"].get<int>());
-                string command = button["command"].get<string>();
-                string args = button.contains("args") ? button["args"] : "";
-                bool admin = button["admin"].get<bool>();
-                p.items[idx] = Item(button["label"], type, command, args, admin);
-            }
-        }
+        if (profile_index < profiles.capacity())
+            profiles[profile_index] = std::make_shared<Profile>(*this, &profile);
     }
     this->lock.unlock();
     return 0;
+}
+
+void Client::update_config() {
+    fs::path dkd_dir = get_cfg_dir();
+    std::ofstream writer(dkd_dir / (std::to_string(m_uuid) + ".json"));
+    writer << config.dump(4);
+    writer.close();
+    string msg = string(1, DX_CONFIG_BYTE) + config.dump();
+    send(socket, msg.c_str(), msg.length()+1, 0);
+    // string whole_nav;
+    // for (auto& nav : nav_history) {
+        // send(socket, nav.c_str(), nav.length()+1, 0);
+        // whole_nav += nav + '\0';
+    // }
+    // send(socket, whole_nav.c_str(), whole_nav.size()+1, 0);
 }
 
 // TODO: Make this for profiles as well
@@ -99,12 +114,14 @@ void Client::draw_properties() {
         ImGui::Text("Rows");
         ImGui::SameLine();
         ImGui::InputInt("##rows", &dxprofile.m_rows);
+        if (dxprofile.m_rows * dxprofile.m_columns > 256) {
+            dxprofile.m_rows = dxprofile.rows;
+        }
         ImGui::Text("Columns");
         ImGui::SameLine();
         ImGui::InputInt("##columns", &dxprofile.m_columns);
         if (dxprofile.m_rows * dxprofile.m_columns > 256) {
-            dxprofile.m_rows = 4;
-            dxprofile.m_columns = 6;
+            dxprofile.m_columns = dxprofile.columns;
         }
         if (dxprofile.m_rows*dxprofile.m_columns < dxprofile.rows*dxprofile.columns) {
             ImGui::TextDisabled("(i) Excess elements will be preserved until client disconnect or\n\tprogram exit");
@@ -119,11 +136,11 @@ void Client::draw_properties() {
         ImGui::SameLine();
         if (ImGui::Button("Confirm", ImVec2(64, 26))) {
             this->nickname = m_nickname;
-            int old_size = dxprofile.rows*dxprofile.columns;
-            int new_size = dxprofile.m_rows*dxprofile.m_columns;
+            const int old_size = dxprofile.rows*dxprofile.columns;
+            const int new_size = dxprofile.m_rows*dxprofile.m_columns;
             if (old_size < new_size) {
                 for (int i = old_size; i < new_size; ++i) {
-                    dxprofile.items.emplace_back();
+                    dxprofile.root->items.emplace_back(std::make_shared<ExecutableItem>(ExecutableItem(nullptr, dxprofile, dxprofile.root)));
                 }
             }
             window_resized = true;
@@ -140,6 +157,7 @@ void Client::draw_properties() {
                     profile["columns"] = dxprofile.m_columns;
                 } else ++profile_counter;
             }
+            // TODO: Reconfigure self if profile is emplaced as to not invalidate references
             if (!profile_exists) {
                 json profile = {
                     {"idx", this->current_profile},
@@ -148,12 +166,15 @@ void Client::draw_properties() {
                 };
                 config["profiles"].emplace_back(profile);
             }
-
-            fs::path dkd_dir = get_cfg_dir();
-            std::ofstream writer(dkd_dir / (std::to_string(this->get_uuid()) + ".json"));
-            writer << this->config.dump(4);
-            writer.close();
-            send(this->socket, string(string(1, DX_CONFIG_BYTE) + this->config.dump()).c_str(), this->config.dump().length()+1, 0);
+            // FIXME: nav_history
+            // Profile& p = this->get_current_profile_ref();
+            // if (p.items.items.size() < p.rows*p.columns) {
+            //     for (int i = p.items.items.size(); i < p.rows*p.columns; ++i) {
+            //         p.items.items.emplace_back(std::make_shared<ExecutableItem>(ExecutableItem(nullptr, p, &p.items)));
+            //     }
+            // }
+            // this->get_current_profile_ref().root = &this->get_current_profile_ref().items;
+            this->update_config();
 
             dxstore.draw_properties = false;
         }

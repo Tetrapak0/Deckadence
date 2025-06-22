@@ -5,18 +5,12 @@
 
 socket_t create_socket(NetworkInterface iface) {
     int res = 0;
-    if (nx_sock_init()) {
-        fprintf(stderr, "Server initialization failed.\n");
-        return NX_INVALID_SOCKET;
-    }
 
     socket_t listen_socket = NX_INVALID_SOCKET;
 
     listen_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (listen_socket == NX_INVALID_SOCKET) {
         fprintf(stderr, "socket() failed.\n");
-        nx_sock_cleanup(); // Winsock works by counting WSAStartup calls and equaling them to Cleanup calls.
-        // TODO: Maybe only have one WSAStartup/Cleanup call
         return NX_INVALID_SOCKET;
     }
 
@@ -28,14 +22,12 @@ socket_t create_socket(NetworkInterface iface) {
     res = bind(listen_socket, (sockaddr*)&addr, sizeof(addr));
     if (res == NX_SOCKET_ERROR) {
         fprintf(stderr, "bind() failed.\n");
-        nx_sock_cleanup();
         return NX_INVALID_SOCKET;
     }
 
     res = listen(listen_socket, SOMAXCONN);
     if (res == NX_SOCKET_ERROR) {
         fprintf(stderr, "listen() failed.\n");
-        nx_sock_cleanup();
         return NX_INVALID_SOCKET;
     }
 

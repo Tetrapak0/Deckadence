@@ -36,12 +36,6 @@ const Vec2<int>& DxWindow::get_size() {
     glfwGetWindowSize(window, &size.x, &size.y);
     return size;
 }
-Vec2<int> DxWindow::get_size_noupdate() const {
-    assert(window);
-    int x, y;
-    glfwGetWindowSize(window, &x, &y);
-    return {x, y};
-}
 
 int DxWindow::create(const char* title, const Vec2<int>& size, const int fullscreen,
                      const std::vector<std::pair<int, int>>& hints,
@@ -114,6 +108,16 @@ int DxWindow::create(const char* title, const Vec2<int>& size, const int fullscr
         glfwSetWindowSizeLimits(window, size.x, size.y, size.x, size.y);
     }
     return 0;
+}
+
+void DxWindow::show(bool focus) {
+    glfwShowWindow(this->window);
+    if (focus)
+        glfwFocusWindow(this->window);
+}
+
+void DxWindow::hide() {
+    glfwHideWindow(this->window);
 }
 
 void DxWindow::destroy() {

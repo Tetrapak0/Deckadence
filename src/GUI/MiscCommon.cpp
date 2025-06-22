@@ -25,7 +25,7 @@ void gui_init_context() {
 
     dxwindow.register_resize_callback(glfwWindowSizeCallback);
     if (dxstore.get_mode() == Deckadence::mode_t::SERVER)
-        accomodate_window_size(dxwindow.get());
+        accommodate_window_size();
 }
 
 #ifdef _DEBUG

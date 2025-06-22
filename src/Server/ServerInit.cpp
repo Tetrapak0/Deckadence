@@ -8,15 +8,22 @@
 using std::thread;
 using std::vector;
 
-int parse_message(const Client& client, const string& msg) {
+int parse_message(Client& client, const string& msg) {
     printf("msg: %s; ", msg.c_str());
+    // TODO: Add prefix for each plugin
     if (msg[0] == DX_EXECUTE_BYTE) {
         for (int i = 1; i < msg.length(); ++i) {
             if (isdigit(msg[i])) continue;
             return -1;
         }
         printf("%llu\n", strtoull(msg.substr(1, msg.length()-1).c_str(), nullptr, 10));
-        client.profiles[client.current_profile].items[strtoull(msg.substr(1, msg.length()-1).c_str(), nullptr, 10)].execute();
+        int idx = strtoull(msg.substr(1, msg.length()-1).c_str(), nullptr, 10);
+        if (!strcmp(client.get_current_profile_ref().root->items[idx]->get_typename(), "Folder")) {
+            client.nav_history.emplace_back(msg);
+        } else if (!strcmp(client.get_current_profile_ref().root->items[idx]->get_typename(), "Go up")) {
+            client.nav_history.pop_back();
+        }
+        client.get_current_profile_ref().root->items[idx]->execute();
     }
     return 0;
 }
@@ -26,12 +33,7 @@ int begin_comm_loop(uint64_t uuid) {
     Client& client = dxstore.retrieve_client(uuid);
     const status_t& dxstatus = dxstore.get_status();
     char buf[1024] = {0};
-    {
-        // TODO: Truncate commands and types from message
-        string msg = string(1, DX_CONFIG_BYTE) + client.get_config().dump();
-        send(client.socket, msg.c_str(), msg.length()+1, 0);
-    }
-
+    client.update_config();
     pollfd pole{client.socket, POLLIN};
     do {
         int res = poll(&pole, 1, 2000);
@@ -56,10 +58,7 @@ int begin_comm_loop(uint64_t uuid) {
         }
     } while (!static_cast<int>(dxstatus) && client.res > 0 && client.send_res > 0);
 
-    string reason;
-    if (static_cast<int>(dxstatus))
-        reason = "Server closed.";
-    dxstore.disconnect_client(client.get_uuid(), reason);
+    dxstore.disconnect_client(client.get_uuid(), "Server closed.");
     return 0;
 }
 
@@ -79,13 +78,14 @@ Client accept_client(socket_t sock) {
     const socket_t client_socket = accept(sock, nullptr, nullptr); // TODO: Correspond the client with an IP
     if (client_socket == NX_INVALID_SOCKET) {
         fprintf(stderr, "Failed to accept client.\n");
-        return Client(NULL, client_socket);
+        return Client(0, client_socket);
     }
     char buf[20];
     if (int res = recv(client_socket, buf, 21, NULL); res > 0) {
         // TODO: Implement a blacklist feature
         buf[res] = '\0';
         uint64_t uuid = strtoull(buf, nullptr, 10);
+        // TODO: client_exists should probably be handled in insert_client
         if (check_client_uuid(buf) && !dxstore.client_exists(uuid)) {
             Client nclient(uuid, client_socket);
             printf("%llu connected.\n", nclient.get_uuid());
@@ -93,7 +93,7 @@ Client accept_client(socket_t sock) {
         }
     }
     nx_sock_close(client_socket);
-    Client nclient(NULL, NX_INVALID_SOCKET);
+    Client nclient(0, NX_INVALID_SOCKET);
     return nclient;
 }
 
@@ -119,10 +119,11 @@ int begin_listen_loop() {
         printf("Connection request(s) received.\n");
         for (auto& p : pollees) {
             if (p.revents) {
+                // TODO: Avoid unneeded construction of objects
                 Client nclient(accept_client(p.fd));
                 if (nclient.socket == NX_INVALID_SOCKET)
                     continue;
-                dxstore.insert_client(nclient);
+                dxstore.insert_client(nclient.get_uuid(), nclient.socket);
                 client_threads.push_back(std::make_unique<thread>(begin_comm_loop, nclient.get_uuid()));
                 p.revents = 0;
             }
@@ -131,9 +132,9 @@ int begin_listen_loop() {
     for (auto& client : client_threads)
         client->join();
     for (auto& iface : interfaces) {
-        nx_sock_close(iface.listen_socket);
+        if (iface.listen_socket != NX_INVALID_SOCKET)
+            nx_sock_close(iface.listen_socket);
     }
-    nx_sock_cleanup();
     dxstore.remove_task(tasks::SERVER);
     return 0;
 }

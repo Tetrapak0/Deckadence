@@ -20,8 +20,17 @@ using std::vector;
 using json = nlohmann::json;
 
 class Client {
+    friend class Deckastore;
+
     uint64_t m_uuid;
     string nickname;
+    // Note: the following to-do has been scrapped because the nested structure is too complex
+    //       to efficiently re-construct on each update. We could limit it to only construct what's needed,
+    //       but a bit of extra ram usage has never hurt anyone. Besides, it's not like the configurations are huge.
+    //       Sockets can currently receive a maximum of 256KB of configuration per client, which may be increased
+    //       when we have a plugin system.
+    //       Furthermore, the client is the only one truly holding the config. The rest is just scoped references.
+    // OldTodo: Construct JSON from classes, don't store it.
     json config;
     string m_nickname = nickname;
 public:
@@ -30,7 +39,8 @@ public:
     int send_res = 1;
 
     int current_profile = 0;
-    vector<Profile> profiles;
+    vector<shared_ptr<Profile>> profiles;
+    vector<string> nav_history;
 
     mutex lock;
     
@@ -44,19 +54,12 @@ public:
     json& get_config();
 
     int configure();
+    void update_config();
 
     void draw_properties();
 
     Client() = delete;
-    explicit Client(const uint64_t uuid, const socket_t socket) : m_uuid(uuid), socket(socket) {
-        if (configure()) {
-            if (this->socket != NX_INVALID_SOCKET) {
-                nx_sock_close(this->socket);
-                this->socket = NX_INVALID_SOCKET;
-            }
-        }
-        // TODO: if client has config and server doesn't, show a dialog and send config to client
-    }
+    explicit Client(const uint64_t uuid, const socket_t socket);
     Client(const Client& other) :   m_uuid(other.m_uuid),
                                     nickname(other.nickname),
                                     config(other.config),

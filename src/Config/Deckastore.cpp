@@ -9,8 +9,13 @@ void Deckastore::reset() {
     self.mode = Deckadence::mode_t::SERVER;
     self.discoverable = true;
     self.port = 32018;
+    self.draw_properties = false;
+    self.draw_item_properties = -1;
+    self.draw_settings = false;
     self.selected_client_id = 0;
     self.clients.clear();
+    self.interfaces.clear();
+    self.type_registry.reset();
     self.window.destroy();
     self.config.clear();
 }
@@ -47,7 +52,7 @@ int Deckastore::create_window(const char* title, const Vec2<int>& size, const in
     window.create(title, size, fullscreen, hints, min_size, max_size);
     return window.get() ? 0 : -1;
 }
-const DxWindow& Deckastore::get_window() const {
+DxWindow& Deckastore::get_window() {
     return window;
 }
 void Deckastore::destroy_window() {
@@ -102,22 +107,17 @@ const decltype(Deckastore::clients)& Deckastore::get_client_map() {
 bool Deckastore::client_exists(const uint64_t client) {
     return clients.find(client) != clients.end();
 }
-void Deckastore::insert_client(Client& client) {
-    lock.lock();
-    clients.emplace(client.get_uuid(), client);
-    if (!selected_client_id)
-        selected_client_id = client.get_uuid();
-    lock.unlock();
-}
 void Deckastore::insert_client(uint64_t uuid, socket_t socket) {
     lock.lock();
-    Client nclient(uuid, socket);
-    clients.emplace(uuid, nclient);
+    // clients.emplace(std::piecewise_construct,
+    //                 std::forward_as_tuple(uuid),
+    //                 std::forward_as_tuple(uuid, socket));
+    clients.try_emplace(uuid, uuid, socket);
     if (!selected_client_id)
         selected_client_id = uuid;
     lock.unlock();
 }
-// TODO: Move to client class
+// TODO: Move to destructor of Client. can't really right now
 void Deckastore::disconnect_client(const uint64_t uuid, const string& reason) {
     lock.lock();
     if (clients.find(uuid) == clients.end()) {
@@ -131,8 +131,6 @@ void Deckastore::disconnect_client(const uint64_t uuid, const string& reason) {
         draw_properties = false;
         selected_client_id = 0;
     }
-    // std::unique_lock client_lock(c.lock);
-    // client_lock.release();
     // this is allowed to fail, and it always will if the client disconnects itself
     send(c.socket, string(string(1, DX_DISCONNECT_BYTE) + reason).c_str(), reason.length()+1, 0);
     if (c.socket != NX_INVALID_SOCKET) {
@@ -144,6 +142,8 @@ void Deckastore::disconnect_client(const uint64_t uuid, const string& reason) {
     else
        printf("%s disconnected.\n", c.get_nickname().c_str());
     erase_client(uuid);
+    if (clients.size())
+        selected_client_id = clients.begin()->first;
     lock.unlock();
 }
 

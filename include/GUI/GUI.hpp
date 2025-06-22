@@ -21,11 +21,11 @@ extern void gui_draw_performance();
 
 extern void gui_set_colors();
 extern void gui_set_style();
-extern void gui_close_dialog(GLFWwindow* window);
+extern void gui_close_dialog();
 extern void gui_show_waiting_tasks();
 extern void gui_init_context();
 
-extern void accomodate_window_size(GLFWwindow* window);
+extern void accommodate_window_size();
 
 extern void glfwWindowSizeCallback(GLFWwindow* window, int width, int height);
 

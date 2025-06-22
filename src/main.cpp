@@ -8,11 +8,23 @@
 
 #include <thread>
 
+// TODO: Keep checking if config file has been changed and reload if it has been
+// TODO: Installer
+
 //int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
 int main(int argc, char** argv) {
     setbuf(stdout, nullptr);
+    setbuf(stderr, nullptr);
     int ret = 0;
     Deckastore& dxstore = Deckastore::get();
+    if (nx_sock_init()) {
+    #ifdef _WIN32
+        printf("Failed to initialize networking. WSAGetLastError(): %d\n", WSAGetLastError());
+    #else
+        printf("Failed to initialize networking: %s\n", strerror(errno));
+    #endif
+        return -1;
+    }
 
     dxstore.set_status(status_t::RESTART);
 #ifdef _DEBUG
@@ -71,5 +83,6 @@ int main(int argc, char** argv) {
         }
     }
     t_si_ensurer.join();
+    nx_sock_cleanup();
     return ret;
 }

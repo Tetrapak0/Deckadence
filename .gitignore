@@ -21,6 +21,9 @@ Server/.vs/
 .vscode/
 *.user
 *.aps
+*.vcxproj
+*.vcxproj.filters
+*.sln
 
 # Misc.
 .idea/
