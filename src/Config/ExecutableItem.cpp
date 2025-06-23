@@ -19,8 +19,8 @@ ExecutableItem::ExecutableItem(json* config, Profile& parent_profile, FolderItem
             this->m_args = args;
         }
         if (config->contains("cwd") && (*config)["cwd"].is_string()) {
-            this->args = (*config)["cwd"].get<string>();
-            this->m_args = args;
+            this->cwd = (*config)["cwd"].get<string>();
+            this->m_cwd = cwd;
         }
         if (config->contains("admin") && (*config)["admin"].is_boolean()) {
             this->admin = (*config)["admin"].get<bool>();
@@ -127,15 +127,15 @@ void ExecutableItem::properties_apply() {
 
 void ExecutableItem::args_to_argv() {
 #ifndef _WIN32
-    this->argv.push_back(this->command.data());
+    this->argv.clear();
+    this->strargv.clear();
 
     string current;
     bool in_sig_quote = false;
     bool in_double_quote = false;
     bool backslash = false;
 
-    this->argv.clear();
-    this->strargv.clear();
+    this->argv.push_back(this->command.data());
     for (size_t i = 0; i < this->args.length(); ++i) {
         const char c = args[i];
 
@@ -186,16 +186,16 @@ void ExecutableItem::execute() {
 
     setsid();
 
-    int fd = open("/dev/null", O_RDWR);
-    dup2(fd, STDIN_FILENO);
-    dup2(fd, STDOUT_FILENO);
-    dup2(fd, STDERR_FILENO);
-    if (fd > 2)
-        close(fd);
+    // TODO: This is debug only. don't push to main
+    // int fd = open("/dev/null", O_RDWR);
+    // dup2(fd, STDIN_FILENO);
+    // dup2(fd, STDOUT_FILENO);
+    // dup2(fd, STDERR_FILENO);
+    // if (fd > 2)
+    //     close(fd);
 
     vector<char*> _argv;
     _argv.reserve(this->argv.size() + 4);
-    string command = this->command;
     if (this->console) {
         vector<string> terminals = {
             std::getenv("TERMINAL") ? std::getenv("TERMINAL") : "",
@@ -211,7 +211,6 @@ void ExecutableItem::execute() {
                 continue;
 
             if (!system(string("command -v " + terminal + " > /dev/null 2>&1").c_str())) {
-                command = terminal;
                 _argv.push_back(vector<char*>::value_type(terminal.data()));
                 _argv.push_back("-e");
                 break;
@@ -228,7 +227,9 @@ void ExecutableItem::execute() {
     _argv.insert(_argv.end(), this->argv.begin(), this->argv.end());
     if (!this->cwd.empty())
         chdir(this->cwd.c_str());
-    execvp(command.c_str(), _argv.data());
+    for (auto& arg : _argv)
+        printf("%s\n", arg);
+    execvp(_argv[0], _argv.data());
 
     _exit(0);
 #endif

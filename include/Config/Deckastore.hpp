@@ -5,7 +5,7 @@
 #define DX_EXECUTE_BYTE 69
 #define DX_WAKEUP_BYTE 0x57
 
-#include "../external/Tetrapak0/NexusSockets.h"
+#include "../../external/Tetrapak0/NexusSockets.h"
 
 #include "ItemTypeRegistry.hpp"
 #include "../Client/Client.hpp"

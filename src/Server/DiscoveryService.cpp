@@ -49,6 +49,7 @@ vector<NetworkInterface> query_interfaces() {
         void* addr = &((sockaddr_in*)ifa->ifa_addr)->sin_addr;
         char ip[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, addr, ip, sizeof(ip));
+        interfaces.emplace_back(ifa->ifa_name, ip);
     }
     freeifaddrs(ifaddr);
 #endif
