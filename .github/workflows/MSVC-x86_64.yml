@@ -25,7 +25,7 @@ jobs:
 
     - uses: abel0b/setup-premake@v2.4
       with:
-        version: "5.0-beta7"
+        version: "5.0.0-beta7"
 
     - name: Set up project
       run: premake5 vs2022

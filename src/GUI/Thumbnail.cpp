@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <thread>
 #include <functional>
+#include <cmath>
 
 /*
  *  Return value is void because the texture is created on a separate thread.
