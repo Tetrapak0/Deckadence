@@ -1,0 +1,42 @@
+name: MSVC-x86_64.yml
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "*" ]
+
+env:
+  SOLUTION_FILE_PATH: ./Deckadence.sln
+
+  BUILD_CONFIGURATION: Release
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - uses: abel0b/setup-premake@v2.4
+      with:
+        version: "5.0-beta7"
+
+    - name: Set up project
+      run: premake5 vs2022
+
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v4.6.2
+      with:
+        name: Deckadence.exe
+        path: ./bin/Win64/Release/Deckadence.exe
+        if-no-files-found: error
