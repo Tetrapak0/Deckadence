@@ -165,8 +165,6 @@ void ExecutableItem::args_to_argv() {
     for (auto& arg : strargv) {
         argv.push_back(arg.data());
     }
-
-    this->argv.push_back(nullptr);
 #endif
 }
 
@@ -186,13 +184,12 @@ void ExecutableItem::execute() {
 
     setsid();
 
-    // TODO: This is debug only. don't push to main
-    // int fd = open("/dev/null", O_RDWR);
-    // dup2(fd, STDIN_FILENO);
-    // dup2(fd, STDOUT_FILENO);
-    // dup2(fd, STDERR_FILENO);
-    // if (fd > 2)
-    //     close(fd);
+    int fd = open("/dev/null", O_RDWR);
+    dup2(fd, STDIN_FILENO);
+    dup2(fd, STDOUT_FILENO);
+    dup2(fd, STDERR_FILENO);
+    if (fd > 2)
+        close(fd);
 
     vector<char*> _argv;
     _argv.reserve(this->argv.size() + 4);
@@ -225,10 +222,12 @@ void ExecutableItem::execute() {
     //     _argv.push_back("xdg-su");
     // }
     _argv.insert(_argv.end(), this->argv.begin(), this->argv.end());
+    _argv.push_back(nullptr);
+    // for (auto& arg : _argv)
+    //     printf("%s\n", arg);
+
     if (!this->cwd.empty())
         chdir(this->cwd.c_str());
-    for (auto& arg : _argv)
-        printf("%s\n", arg);
     execvp(_argv[0], _argv.data());
 
     _exit(0);
