@@ -8,16 +8,10 @@ const char wakeywakeybyte[1] = {DX_WAKEUP_BYTE};
 
 int si_summon_instance() {
     Deckastore& dxstore = Deckastore::get();
-    if (nx_sock_init()) {
-        fprintf(stderr, "Networking stack for SIS faield to initialize.\n");
-        dxstore.set_status(status_t::DONE);
-        return NX_SOCKET_ERROR;
-    }
     socket_t waker_upper = socket(AF_INET, SOCK_STREAM, 0);
     if (waker_upper == NX_INVALID_SOCKET) {
         fprintf(stderr, "Failed to create wakeup socket.\n");
         dxstore.set_status(status_t::DONE);
-        nx_sock_cleanup();
         return NX_SOCKET_ERROR;
     }
 
@@ -31,13 +25,11 @@ int si_summon_instance() {
             fprintf(stderr, "Failed to wake up main instance.\n");
             dxstore.set_status(status_t::DONE);
             nx_sock_close(waker_upper);
-            nx_sock_cleanup();
             return NX_SOCKET_ERROR;
         }
     }
     dxstore.set_status(status_t::DONE);
     nx_sock_close(waker_upper);
-    nx_sock_cleanup();
     return 0;
 }
 
@@ -46,14 +38,8 @@ int si_socket_init() {
     if (!dxstore.has_sis())
         return 0;
     const status_t& dxstatus = dxstore.get_status();
-    const DxWindow& dxwindow = dxstore.get_window();
+    DxWindow& dxwindow = dxstore.window;
     dxstore.add_task(tasks::SIS);
-    if (nx_sock_init()) {
-        fprintf(stderr, "Networking stack for SIS failed to initlaize.\n");
-        dxstore.set_status(status_t::DONE);
-        dxstore.remove_task(tasks::SIS);
-        return NX_SOCKET_ERROR;
-    }
 //#ifdef _WIN32
 //    if (getenv("")) {
         // TODO: Multiple users.
@@ -69,7 +55,6 @@ int si_socket_init() {
     if (sis == NX_INVALID_SOCKET) {
         fprintf(stderr, "Failed to ensure single instance functionality.\n");
         dxstore.set_status(status_t::DONE);
-        nx_sock_cleanup();
         dxstore.remove_task(tasks::SIS);
         return NX_SOCKET_ERROR;
     }
@@ -83,7 +68,6 @@ int si_socket_init() {
         fprintf(stderr, "Attempting to summon existing instance.\n");
         dxstore.set_status(status_t::DONE);
         nx_sock_close(sis);
-        nx_sock_cleanup();
         dxstore.remove_task(tasks::SIS);
         return si_summon_instance();
     }
@@ -92,7 +76,6 @@ int si_socket_init() {
         fprintf(stderr, "Failed to listen for wakeup calls.\n");
         dxstore.set_status(status_t::DONE);
         nx_sock_close(sis);
-        nx_sock_cleanup();
         dxstore.remove_task(tasks::SIS);
         return NX_SOCKET_ERROR;
     }
@@ -106,7 +89,6 @@ int si_socket_init() {
         if (!pres) {
             continue;
         } else if (pres == NX_SOCKET_ERROR) {
-
         }
         pole[0].revents = 0;
 
@@ -123,10 +105,8 @@ int si_socket_init() {
 
         if (dxwindow.get()) {
             if (*buf == *wakeywakeybyte) {
-                GLFWwindow* window = dxwindow.get();
                 printf("Received wakeup signal.\n");
-                glfwShowWindow(window);
-                glfwFocusWindow(window);
+                dxwindow.show();
             }
         }
 
@@ -134,7 +114,6 @@ int si_socket_init() {
     } while (!(dxstatus == status_t::DONE || dxstatus == status_t::EXITING) || dxstore.get_tasks() != tasks::SIS);
 
     nx_sock_close(sis);
-    nx_sock_cleanup();
     dxstore.remove_task(tasks::SIS);
     return 0;
 }

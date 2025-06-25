@@ -5,8 +5,9 @@
 #define DX_EXECUTE_BYTE 69
 #define DX_WAKEUP_BYTE 0x57
 
-#include "../external/Tetrapak0/NexusSockets.h"
+#include "../../external/Tetrapak0/NexusSockets.h"
 
+#include "ItemTypeRegistry.hpp"
 #include "../Client/Client.hpp"
 #include "../GUI/GUI.hpp"
 #include "../GUI/DxWindow.hpp"
@@ -67,15 +68,12 @@ class Deckastore {
     bool singleinstance = true;
     uint16_t port = 32018;
 
-    uint64_t selected_client_id = 0; // NOTE: 0 mustn't be a valid UUID
+    uint64_t selected_client_id = 0;
     unordered_map<uint64_t, Client> clients;
     vector<NetworkInterface> interfaces;
 
-    mutex lock;
-
     json config;
 
-    DxWindow window;
 
     static void reset();
 
@@ -89,6 +87,10 @@ class Deckastore {
 
     void disable_sis();
 public:
+    DxWindow window;
+    mutex lock;
+    ItemTypeRegistry& type_registry = ItemTypeRegistry::get();
+
     int  draw_item_properties = -1;
     bool draw_properties      = false;
     bool draw_settings        = false;
@@ -98,7 +100,6 @@ public:
     int create_window(const char* title, const Vec2<int>& size = {800, 600}, int fullscreen = 0,
                       const std::vector<std::pair<int, int>>& hints = {},
                       const Vec2<int>& min_size = {800, 600}, const Vec2<int>& max_size = {GLFW_DONT_CARE, GLFW_DONT_CARE});
-    [[nodiscard]] const DxWindow& get_window() const;
     void destroy_window();
 
     static Deckastore& get();
@@ -119,7 +120,6 @@ public:
 
     const decltype(clients)& get_client_map();
     bool client_exists(uint64_t client);
-    void insert_client(Client& client);
     void insert_client(uint64_t uuid, socket_t socket);
     void disconnect_client(uint64_t uuid, const string& reason);
 

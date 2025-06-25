@@ -31,20 +31,25 @@ vector<NetworkInterface> query_interfaces() {
         }
     }
 #else
-    ifaddrs* ifaddr;
+    ifaddrs* ifaddr = nullptr;
     if (getifaddrs(&ifaddr) == -1) {
         return interfaces;
     }
 
     for (ifaddrs* ifa = ifaddr; ifa; ifa = ifa->ifa_next) {
-        if (!ifa->ifa_addr || ifa->ifa_addr->sa_family != AF_INET) {
+        if (!ifa->ifa_addr || ifa->ifa_addr->sa_family != AF_INET)
             continue;
-        }
+        if (ifa->ifa_flags & IFF_LOOPBACK)
+            continue;
+        if (!(ifa->ifa_flags & IFF_UP))
+            continue;
+        if (!strncmp(ifa->ifa_name, "tun", 3) || !strncmp(ifa->ifa_name, "tap", 3) ||
+            !strncmp(ifa->ifa_name, "p2p", 3) || !strncmp(ifa->ifa_name, "wifi-direct", 11))
+            continue;
         void* addr = &((sockaddr_in*)ifa->ifa_addr)->sin_addr;
         char ip[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, addr, ip, sizeof(ip));
-        if (strcmp(ip, "172.0.0.1"))
-            interfaces.emplace_back(ifa->ifa_name, ip);
+        interfaces.emplace_back(ifa->ifa_name, ip);
     }
     freeifaddrs(ifaddr);
 #endif
@@ -57,7 +62,6 @@ int start_discovery_service() {
     const bool& discoverable = dxstore.get_discoverable();
     dxstore.add_task(tasks::DISCOVERY);
     uint16_t port = dxstore.get_port();
-    nx_sock_init();
     vector<NetworkInterface>& interfaces = dxstore.get_ifaces_ref();
 
     struct sockaddr_in mcast_addr{};
@@ -99,7 +103,6 @@ int start_discovery_service() {
     for (auto& iface : interfaces) {
         nx_sock_close(iface.discovery_sock);
     }
-    nx_sock_cleanup();
     dxstore.remove_task(tasks::DISCOVERY);
     return 0;
 }

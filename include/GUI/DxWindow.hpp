@@ -28,11 +28,12 @@ public:
 
     void resize(const Vec2<int>& size) const;
     const Vec2<int>& get_size();
-    [[nodiscard]] Vec2<int> get_size_noupdate() const;
 
     int create(const char* title, const Vec2<int>& size = {800, 600}, int fullscreen = 0,
                const vector<pair<int, int>>& hints = {}, const Vec2<int>& min_size = {800, 600},
                const Vec2<int>& max_size = {GLFW_DONT_CARE, GLFW_DONT_CARE});
+    void show(bool focus = true);
+    void hide();
     void destroy();
 
     DxWindow() = default;

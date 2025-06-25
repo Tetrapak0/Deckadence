@@ -31,9 +31,13 @@
 - Debian-based: `sudo apt update && sudo apt install libfreetype-dev cmake build-essential clang libglfw3-dev libdbus-1-dev libgl1-dev libglu1-dev libx11-dev libxrandr-dev libwayland-dev`
 - Fedora-based: `sudo dnf upgrade --refresh && sudo dnf install freetype-dev cmake clang glfw-devel dbus dbus-devel mesa-libGL-devel mesa-libGLU-devel libx11-devel libxrandr-devel wayland-devel && sudo dnf groupinstall "Development Tools" "Development Libraries"`
 #### 2.2 Windows
-> ⚠ MSVC is not supported because Microsoft C++ is completely and utterly repugnant and should be EOL'd. Even their devs hate using it. It's true. ⚠
->
-> During development for Windows, Deckadence is only built using clang++ via MSYS for the aforementioned reasons.
+##### MSVC / Visual Studio
+1. Download [Premake](https://premake.github.io/)
+2. Install [Git](https://git-scm.com/downloads)
+3. Run `git clone https://github.com/Tetrapak0/Deckadence`
+4. Open the cloned repository and run `premake5 vs2022` (make sure premake is in your PATH)
+5. Open `Deckadence.sln` and build
+##### MSYS / clang
 1. Install MSYS2 from https://www.msys2.org/
 2. Open the Clang64 environment and run the following commands to install dependencies:
     > Note that you may be asked to quit the session to update packages. In that case, please re-run the last command.

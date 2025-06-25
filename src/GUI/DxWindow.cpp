@@ -8,6 +8,11 @@
 
 #include "../../include/GUI/GUI.hpp"
 #include "../../include/GUI/DxWindow.hpp"
+#include "../../include/GUI/Thumbnail.hpp"
+
+#include "../../external/stb/stb_image.h"
+
+#include "../../include/icon.h"
 
 GLFWwindow* DxWindow::get() const {
     return window;
@@ -35,12 +40,6 @@ const Vec2<int>& DxWindow::get_size() {
     assert(window);
     glfwGetWindowSize(window, &size.x, &size.y);
     return size;
-}
-Vec2<int> DxWindow::get_size_noupdate() const {
-    assert(window);
-    int x, y;
-    glfwGetWindowSize(window, &x, &y);
-    return {x, y};
 }
 
 int DxWindow::create(const char* title, const Vec2<int>& size, const int fullscreen,
@@ -113,7 +112,25 @@ int DxWindow::create(const char* title, const Vec2<int>& size, const int fullscr
     } else {
         glfwSetWindowSizeLimits(window, size.x, size.y, size.x, size.y);
     }
+    GLFWimage icon;
+    int channels = 0;
+    icon.pixels = stbi_load_from_memory(icon_png, icon_png_len, &icon.width, &icon.height, &channels, 4);
+    if (icon.pixels) {
+        glfwSetWindowIcon(this->window, 1, &icon);
+        stbi_image_free(icon.pixels);
+    }
+
     return 0;
+}
+
+void DxWindow::show(bool focus) {
+    glfwShowWindow(this->window);
+    if (focus)
+        glfwFocusWindow(this->window);
+}
+
+void DxWindow::hide() {
+    glfwHideWindow(this->window);
 }
 
 void DxWindow::destroy() {

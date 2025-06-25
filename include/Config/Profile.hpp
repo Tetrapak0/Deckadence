@@ -3,28 +3,32 @@
 #include <string>
 #include <vector>
 
+#include "../../external/jsonhpp/json.hpp"
+
 #include "Item.hpp"
 
 using std::vector;
 using std::string;
 
+using json = nlohmann::json;
+
+class Client;
+
 class Profile {
     friend class Client;
 public:
     string name;
-    vector<Item> items;
-
     int rows = 4;
     int columns = 6;
 
-    Profile() = default;
-    Profile(string name, const int rows, const int columns) : name(std::move(name)), rows(rows), columns(columns),
-                                                              m_name(name), m_rows(rows), m_columns(columns) {
-        items.reserve(rows*columns);
-        for (int i = 0; i < rows*columns; ++i) {
-            items.emplace_back();
-        }
-    }
+    json* config = nullptr;
+    Client& parent;
+
+    FolderItem items;
+    FolderItem* root = &items;
+
+
+    explicit Profile(Client& parent, json* config = nullptr);
 private:
     string m_name = name;
     int m_rows = rows;

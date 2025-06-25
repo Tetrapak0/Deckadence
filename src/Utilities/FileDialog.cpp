@@ -5,14 +5,14 @@
 #define GLFW_EXPOSE_NATIVE_WAYLAND
 #endif
 
-#include "../../include/Utilities/FileDialog.hpp"
-
-#include "../../include/GUI/GUI.hpp"
 #include "../../include/Config/Deckastore.hpp"
+#include "../../include/GUI/GUI.hpp"
+
+#include "../../include/Utilities/FileDialog.hpp"
 
 string nfd_open_file() {
     NFD_Init();
-    const DxWindow& dxwindow = Deckastore::get().get_window();
+    const DxWindow& dxwindow = Deckastore::get().window;
     nfdwindowhandle_t nfdwh{};
     NFD_GetNativeWindowFromGLFWWindow(dxwindow.get(), &nfdwh);
     nfdopendialogu8args_t nfdargs{};
@@ -31,7 +31,7 @@ string nfd_open_file() {
 string nfd_open_exe() {
 #ifdef _WIN32
     NFD_Init();
-    const DxWindow& dxwindow = Deckastore::get().get_window();
+    const DxWindow& dxwindow = Deckastore::get().window;
     nfdwindowhandle_t nfdwh{};
     NFD_GetNativeWindowFromGLFWWindow(dxwindow.get(), &nfdwh);
     nfdu8filteritem_t nfdfilter[1]{{"Executables", "exe"}};
@@ -52,7 +52,7 @@ string nfd_open_exe() {
 
 string nfd_open_dir() {
     NFD_Init();
-    const DxWindow& dxwindow = Deckastore::get().get_window();
+    const DxWindow& dxwindow = Deckastore::get().window;
     nfdwindowhandle_t nfdwh{};
     NFD_GetNativeWindowFromGLFWWindow(dxwindow.get(), &nfdwh);
     nfdpickfolderu8args_t nfdargs{};

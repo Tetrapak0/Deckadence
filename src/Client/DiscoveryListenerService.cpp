@@ -29,7 +29,6 @@ void start_listening() {
     const status_t& dxstatus = dxstore.get_status();
     Client& dxclient = dxstore.retrieve_current_client();
 
-    nx_sock_init();
     vector<NetworkInterface>& interfaces = dxstore.get_ifaces_ref();
 
     struct sockaddr_in mcast_addr{};
@@ -119,7 +118,6 @@ void start_listening() {
     for (auto& iface : interfaces) {
         nx_sock_close(iface.discovery_sock);
     }
-    nx_sock_cleanup();
     servers_lock.lock();
     servers.clear();
     servers_lock.unlock();
