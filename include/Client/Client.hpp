@@ -9,7 +9,7 @@
 #include "../../external/jsonhpp/json.hpp"
 #include "../../external/Tetrapak0/NexusSockets.h"
 
-#include "Profile.hpp"
+#include "../Config/Profile.hpp"
 
 namespace fs = std::filesystem;
 

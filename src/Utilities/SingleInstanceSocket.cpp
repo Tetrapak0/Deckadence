@@ -38,7 +38,7 @@ int si_socket_init() {
     if (!dxstore.has_sis())
         return 0;
     const status_t& dxstatus = dxstore.get_status();
-    DxWindow& dxwindow = dxstore.get_window();
+    DxWindow& dxwindow = dxstore.window;
     dxstore.add_task(tasks::SIS);
 //#ifdef _WIN32
 //    if (getenv("")) {

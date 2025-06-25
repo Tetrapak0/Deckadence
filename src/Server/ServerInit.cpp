@@ -80,10 +80,10 @@ Client accept_client(socket_t sock) {
         fprintf(stderr, "Failed to accept client.\n");
         return Client(0, client_socket);
     }
-    char buf[20];
+    char buf[21];
     if (int res = recv(client_socket, buf, 21, NULL); res > 0) {
         // TODO: Implement a blacklist feature
-        buf[res] = '\0';
+        buf[res-1] = '\0'; // null terminator is counted too
         uint64_t uuid = strtoull(buf, nullptr, 10);
         // TODO: client_exists should probably be handled in insert_client
         if (check_client_uuid(buf) && !dxstore.client_exists(uuid)) {

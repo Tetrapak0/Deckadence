@@ -24,6 +24,7 @@ Server/.vs/
 *.vcxproj
 *.vcxproj.filters
 *.sln
+obj/
 
 # Misc.
 .idea/

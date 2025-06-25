@@ -29,7 +29,7 @@ file(GLOB_RECURSE NoWarnCpp ${CMAKE_CURRENT_LIST_DIR}/external/*.cpp)
 
 set_source_files_properties(${NoWarnCpp} PROPERTIES COMPILE_FLAGS "-w")
 
-add_executable(Deckadence ${DxSrc} ${ImSrc} ${NFDExSrc})
+add_executable(Deckadence ${DxSrc} ${ImSrc} ${NFDExSrc} ${CMAKE_CURRENT_LIST_DIR}/external/stb/stbi.c)
 set_property(TARGET Deckadence PROPERTY CXX_STANDARD 17)
 
 # must be ran with -DCMAKE_BUILD_TYPE=Debug
@@ -38,6 +38,8 @@ if (${CMAKE_BUILD_TYPE} MATCHES Debug)
 endif()
 
 if (WIN32)
+#    target_compile_options(Deckadence PRIVATE -Wl,--subsystem,windows)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--subsystem,windows")
     target_link_libraries(Deckadence glfw3 opengl32 freetype dwmapi ws2_32 iphlpapi)
 elseif (UNIX AND NOT APPLE)
     find_package(PkgConfig REQUIRED)

@@ -1,5 +1,5 @@
-#include "../../include/Config/Profile.hpp"
 #include "../../include/Config/Deckastore.hpp"
+#include "../../include/Config/Profile.hpp"
 
 // it just keeps getting messier and messier...
 Profile::Profile(Client& parent, json* config) : rows(config ?

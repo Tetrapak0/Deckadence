@@ -1,12 +1,12 @@
+#include "../../include/Config/Deckastore.hpp"
 #include "../../include/GUI/GUI.hpp"
 #include "../../include/Config/Config.hpp"
-#include "../../include/Config/Deckastore.hpp"
 
 bool window_resized = false;
 
 void accommodate_window_size() {
     Deckastore& dxstore = Deckastore::get();
-    DxWindow& dxwindow = dxstore.get_window();
+    DxWindow& dxwindow = dxstore.window;
     static int w_old = 0, h_old = 0;
     if (!w_old || !h_old) {
         Vec2<int> size = dxwindow.get_size();
@@ -59,17 +59,15 @@ void accommodate_window_size() {
 extern void draw_top_bar();
 extern void draw_editor();
 extern void draw_main_window();
-extern void gui_close_dialog();
 extern void draw_connect_dialog();
 extern void gui_draw_item_properties();
-extern void gui_draw_settings();
 extern void gui_draw_properties();
 
 void glfwWindowSizeCallback(GLFWwindow* window, int width, int height) {
     static Deckastore& dxstore = Deckastore::get();
     const Deckadence::mode_t dxmode = dxstore.get_mode();
     const static status_t& dxstatus = dxstore.get_status();
-    static DxWindow& dxwindow = dxstore.get_window();
+    static DxWindow& dxwindow = dxstore.window;
     (void)dxwindow.get_size();
     window_resized = true;
     ImGuiIO& io = ImGui::GetIO();
@@ -79,26 +77,31 @@ void glfwWindowSizeCallback(GLFWwindow* window, int width, int height) {
 
     // TODO: Unify main UI loop
     if (dxmode == Deckadence::mode_t::SERVER) {
-        if (dxstore.draw_properties)
-            dxstore.retrieve_current_client().draw_properties();
-        if (dxstore.draw_settings)
-            gui_draw_settings();
-        if (dxstore.draw_item_properties != -1)
-            gui_draw_item_properties();
-        if (dxwindow.should_close())
+        if (dxwindow.should_close()) {
             gui_close_dialog();
-        if (dxstatus == status_t::EXITING || dxstatus == status_t::RESTART)
+        } else if (dxstatus == status_t::EXITING || dxstatus == status_t::RESTART) {
             gui_show_waiting_tasks();
+        } else {
+            if (dxstore.draw_item_properties != -1) {
+                gui_draw_item_properties();
+            } else if (dxstore.draw_properties) {
+                dxstore.retrieve_current_client().draw_properties();
+            } else if (dxstore.draw_settings) {
+                gui_draw_settings();
+            }
+        }
         draw_top_bar();
         draw_editor();
     } else if (dxmode == Deckadence::mode_t::CLIENT) {
         Client& self = dxstore.retrieve_current_client();
+        // TODO: Font
         if (dxstatus == status_t::EXITING) {
             gui_show_waiting_tasks();
         } else if (self.socket == NX_INVALID_SOCKET) {
-            //ImGui::PushFont(header); // TODO: Font
-            draw_connect_dialog();
-            //ImGui::PopFont();
+            if (dxstore.draw_settings)
+                gui_draw_settings();
+            else
+                draw_connect_dialog();
         }
         if (dxwindow.should_close()) {
             dxstore.set_status(status_t::EXITING);

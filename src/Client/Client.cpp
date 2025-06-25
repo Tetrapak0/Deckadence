@@ -108,6 +108,7 @@ void Client::draw_properties() {
     ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowSize(ImVec2(480, 360));
     if (ImGui::BeginPopupModal("Client properties", nullptr, modalflags)) {
+        ImGui::TextDisabled("Client ID: %llu", this->m_uuid);
         ImGui::Text("Nickname");
         ImGui::SameLine();
         ImGui::InputText("##nickname", &this->m_nickname);

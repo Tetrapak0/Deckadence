@@ -15,15 +15,15 @@ constexpr ImGuiWindowFlags modalflags = ImGuiWindowFlags_NoMove |
                                         ImGuiWindowFlags_NoCollapse |
                                         ImGuiWindowFlags_NoDocking;
 
-#ifdef _DEBUG
-extern void gui_draw_performance();
-#endif
-
 extern void gui_set_colors();
 extern void gui_set_style();
 extern void gui_close_dialog();
 extern void gui_show_waiting_tasks();
+extern void gui_draw_settings();
 extern void gui_init_context();
+#ifdef _DEBUG
+extern void gui_draw_performance();
+#endif
 
 extern void accommodate_window_size();
 

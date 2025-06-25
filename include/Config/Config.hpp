@@ -16,8 +16,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "../GUI/GUI.hpp"
 #include "Deckastore.hpp"
+#include "../GUI/GUI.hpp"
 
 #include "../../external/jsonhpp/json.hpp"
 

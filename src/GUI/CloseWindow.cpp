@@ -1,6 +1,6 @@
+#include "../../include/Config/Deckastore.hpp"
 #include "../../include/GUI/GUI.hpp"
 #include "../../include/Config/Config.hpp"
-#include "../../include/Config/Deckastore.hpp"
 
 void gui_show_waiting_tasks() {
     static Deckastore& dxstore = Deckastore::get();
@@ -51,7 +51,7 @@ void gui_show_waiting_tasks() {
 
 void gui_close_dialog() {
     static Deckastore& dxstore = Deckastore::get();
-    static DxWindow& dxwindow = dxstore.get_window();
+    static DxWindow& dxwindow = dxstore.window;
     if (dxstore.get_status() != status_t::RUNNING) {
         glfwSetWindowShouldClose(dxwindow.get(), GLFW_FALSE);
         return;
@@ -74,7 +74,7 @@ void gui_close_dialog() {
             ImGui::SameLine();
             if (ImGui::Button("Confirm")) {
                 if (!close_type) {
-                    dxstore.get_window().hide();
+                    dxstore.window.hide();
                 } else if (close_type == 1) {
                     dxstore.set_status(status_t::EXITING);
                 } else if (close_type == 2) {

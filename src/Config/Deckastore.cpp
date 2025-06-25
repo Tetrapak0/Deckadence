@@ -52,9 +52,6 @@ int Deckastore::create_window(const char* title, const Vec2<int>& size, const in
     window.create(title, size, fullscreen, hints, min_size, max_size);
     return window.get() ? 0 : -1;
 }
-DxWindow& Deckastore::get_window() {
-    return window;
-}
 void Deckastore::destroy_window() {
     window.destroy();
 }

@@ -1,6 +1,6 @@
+#include "../../include/Client/Client.hpp"
 #include "../../include/Config/ItemTypeRegistry.hpp"
 #include "../../include/Config/Profile.hpp"
-#include "../../include/Client/Client.hpp"
 
 ItemTypeRegistry& ItemTypeRegistry::get() {
     static ItemTypeRegistry itr;

@@ -1,7 +1,7 @@
+#include "../../include/Config/Deckastore.hpp"
 #include "../../include/GUI/GUI.hpp"
 #include "../../include/Client/Client.hpp"
 #include "../../include/Config/Config.hpp"
-#include "../../include/Config/Deckastore.hpp"
 #include "../../include/Utilities/SingleInstanceSocket.hpp"
 
 #include <thread>
@@ -24,6 +24,9 @@ void gui_draw_item_properties() {
     if (!tmp)
         tmp = dxprofile.root->items[dxstore.draw_item_properties];
     if (ImGui::BeginPopupModal("Button properties", nullptr, modalflags)) {
+        ImGui::BeginDisabled();
+        ImGui::TextWrapped("(i) Please do not use environment variables. Write your full user path (if applicable), not ~/");
+        ImGui::EndDisabled();
         ImGui::AlignTextToFramePadding();
         ImGui::Text("Type: ");
         ImGui::SameLine();
@@ -95,71 +98,6 @@ void gui_draw_item_properties() {
         }
         dxstore.lock.unlock();
         ImGui::EndDisabled();
-        ImGui::EndPopup();
-    }
-}
-
-// TODO: Add to client
-void gui_draw_settings() {
-    static Deckastore& dxstore = Deckastore::get();
-    static int mode = 0;
-    static bool discoverable = dxstore.get_discoverable();
-    static int port = dxstore.get_port();
-    ImGui::OpenPopup("Settings");
-    ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-    ImGui::SetNextWindowSize(ImVec2(480, 360));
-    if (ImGui::BeginPopupModal("Settings", nullptr, modalflags)) {
-        ImGui::Text("Should this machine act as a server or client?");
-        ImGui::RadioButton("Server", &mode, 0);
-        ImGui::BeginDisabled(mode);
-        ImGui::SetCursorPosX(24);
-        ImGui::Checkbox("Make this server discoverable on my network", &discoverable);
-        ImGui::SetCursorPosX(24);
-        ImGui::AlignTextToFramePadding();
-        ImGui::Text("Server port: ");
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(256);
-        ImGui::InputInt("##port", &port);
-        if (port > 65535 || port < 0)
-            port = dxstore.get_port();
-        ImGui::EndDisabled();
-        ImGui::RadioButton("Client", &mode, 1);
-        ImGui::SetCursorPos(ImVec2(340, 328));
-        if (ImGui::Button("Cancel", ImVec2(64, 24))) {
-            dxstore.draw_settings = false;
-            mode = 0;
-            discoverable = dxstore.get_discoverable();
-            port = dxstore.get_port();
-        }
-        ImGui::SameLine();
-        if (!mode && port == dxstore.get_port()) {
-            ImGui::BeginDisabled(discoverable == dxstore.get_discoverable());
-            if (ImGui::Button("Apply", ImVec2(64, 24))) {
-                json& config = dxstore.get_config();
-                dxstore.set_discoverable(discoverable);
-                fs::path dkd_dir = get_cfg_dir();
-                fs::create_directories(dkd_dir);
-                config["server"]["discoverable"] = discoverable;
-                // TODO: Deckastore::update_config()
-                std::ofstream writer(dkd_dir / "config.json");
-                writer << config.dump(4);
-                writer.close();
-                dxstore.draw_settings = false;
-            }
-            ImGui::EndDisabled();
-        } else if (ImGui::Button("Restart", ImVec2(64, 24))) {
-            json& config = dxstore.get_config();
-            config["mode"] = mode;
-            config["server"]["discoverable"] = discoverable;
-            config["server"]["port"] = port;
-            fs::path dkd_dir = get_cfg_dir();
-            fs::create_directories(dkd_dir);
-            std::ofstream writer(dkd_dir / "config.json");
-            writer << config.dump(4);
-            writer.close();
-            dxstore.set_status(status_t::RESTART);
-            dxstore.draw_settings = false;
-        }
         ImGui::EndPopup();
     }
 }
@@ -265,6 +203,7 @@ void draw_editor() {
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
                 Profile& dxprofile = dxstore.retrieve_current_client().get_current_profile_ref();
                 string msg = string(1, DX_EXECUTE_BYTE) + std::to_string(i);
+                // TODO: Change to something like Item::openable_in_editor
                 if (!strcmp(dxprofile.root->items[i]->get_typename(), "Folder")) {
                     dxprofile.parent.nav_history.emplace_back(msg);
                     dxprofile.root->items[i]->execute();
@@ -302,7 +241,7 @@ int server_gui_init() {
         dxstore.set_status(status_t::DONE);
         return -1;
     }
-    const DxWindow& dxwindow = dxstore.get_window();
+    const DxWindow& dxwindow = dxstore.window;
 
     gui_init_context();
 

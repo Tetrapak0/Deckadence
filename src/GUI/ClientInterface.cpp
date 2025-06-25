@@ -1,7 +1,7 @@
-#include "../../include/GUI/GUI.hpp"
-#include "../../include/Config/Config.hpp"
 #include "../../include/Config/Deckastore.hpp"
 #include "../../include/Client/Client.hpp"
+#include "../../include/GUI/GUI.hpp"
+#include "../../include/Config/Config.hpp"
 #include "../../include/Client/DiscoveryListenerService.hpp"
 
 void request_execution(int item) {
@@ -25,6 +25,7 @@ void draw_main_window() {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0.0f, 0.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyle().Colors[ImGuiCol_Button]);
     ImGui::Begin("##main", nullptr, iwf);
     for (int i = 0; i < size; ++i) {
         bool disabled = dxprofile.root->items[i]->prop_apply_disable();
@@ -53,8 +54,9 @@ void draw_main_window() {
         }
     }
     dxstore.retrieve_current_client().lock.unlock();
-    ImGui::End();
+    ImGui::PopStyleColor();
     ImGui::PopStyleVar(3);
+    ImGui::End();
 }
 
 void draw_connect_dialog() {
@@ -100,9 +102,13 @@ void draw_connect_dialog() {
         ImGui::SetCursorPosY(326);
         ImGui::Checkbox("Enter manually", &manual_connect);
         ImGui::SameLine();
-        ImGui::SetCursorPosX(280);
+        ImGui::SetCursorPosX(216);
+        if (ImGui::Button("Settings", ImVec2(64, 26))) {
+            Deckastore::get().draw_settings = true;
+        }
+        ImGui::SameLine();
         if (ImGui::Button("Exit", ImVec2(64, 26))) {
-            glfwSetWindowShouldClose(Deckastore::get().get_window().get(), GLFW_TRUE);
+            glfwSetWindowShouldClose(Deckastore::get().window.get(), GLFW_TRUE);
         }
         ImGui::SameLine();
         ImGui::BeginDisabled((!manual_connect && selected_server == -1) || (manual_connect && !ip_buffer[0]));
@@ -161,7 +167,7 @@ int client_gui_init() {
         dxstore.set_status(status_t::DONE);
         return -1;
     }
-    const DxWindow& dxwindow = dxstore.get_window();
+const DxWindow& dxwindow = dxstore.window;
 
     gui_init_context();
 
@@ -185,20 +191,27 @@ int client_gui_init() {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+        // TODO: Font
+        //ImGui::PushFont(header);
         if (dxstatus == status_t::EXITING) {
             gui_show_waiting_tasks();
         } else if (self.socket == NX_INVALID_SOCKET) {
-            //ImGui::PushFont(header);
-            draw_connect_dialog();
-            //ImGui::PopFont();
+            if (glfwGetInputMode(dxstore.window.get(), GLFW_CURSOR) != GLFW_CURSOR_NORMAL)
+                glfwSetInputMode(dxstore.window.get(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            if (dxstore.draw_settings)
+                gui_draw_settings();
+            else
+                draw_connect_dialog();
+        } else {
+            if (glfwGetInputMode(dxstore.window.get(), GLFW_CURSOR) != GLFW_CURSOR_HIDDEN)
+                glfwSetInputMode(dxstore.window.get(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
         }
         if (dxwindow.should_close()) {
             dxstore.set_status(status_t::EXITING);
             glfwSetWindowShouldClose(dxwindow.get(), GLFW_FALSE);
         }
-
         draw_main_window();
-
+        //ImGui::PopFont();
 // #ifdef _DEBUG
 //         gui_draw_performance();
 // #endif

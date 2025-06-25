@@ -1,5 +1,5 @@
-#include "../../include/Config/Config.hpp"
 #include "../../include/Config/Deckastore.hpp"
+#include "../../include/Config/Config.hpp"
 #include "../../include/GUI/GUI.hpp"
 
 #include <fstream>
@@ -183,7 +183,7 @@ int run_oobe() {
     Deckastore& dxstore = Deckastore::get();
     const status_t& dxstatus = dxstore.get_status();
     dxstore.create_window("Set up Deckadence", {640, 480}, 0, {std::make_pair(GLFW_RESIZABLE, GLFW_FALSE)});
-    const DxWindow& dxwindow = dxstore.get_window();
+    const DxWindow& dxwindow = dxstore.window;
     if (!dxwindow.get()) {
         dxstore.set_status(status_t::DONE);
         return -1;

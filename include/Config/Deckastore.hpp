@@ -74,7 +74,6 @@ class Deckastore {
 
     json config;
 
-    DxWindow window;
 
     static void reset();
 
@@ -88,6 +87,7 @@ class Deckastore {
 
     void disable_sis();
 public:
+    DxWindow window;
     mutex lock;
     ItemTypeRegistry& type_registry = ItemTypeRegistry::get();
 
@@ -100,7 +100,6 @@ public:
     int create_window(const char* title, const Vec2<int>& size = {800, 600}, int fullscreen = 0,
                       const std::vector<std::pair<int, int>>& hints = {},
                       const Vec2<int>& min_size = {800, 600}, const Vec2<int>& max_size = {GLFW_DONT_CARE, GLFW_DONT_CARE});
-    [[nodiscard]] DxWindow& get_window();
     void destroy_window();
 
     static Deckastore& get();

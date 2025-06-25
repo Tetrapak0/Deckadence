@@ -1,5 +1,5 @@
-#include "../../include/Config/Config.hpp"
 #include "../../include/Config/Deckastore.hpp"
+#include "../../include/Config/Config.hpp"
 
 #include <filesystem>
 #include <fstream>

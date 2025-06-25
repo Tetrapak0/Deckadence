@@ -1,5 +1,5 @@
-#include "../include/Config/Config.hpp"
 #include "../include/Config/Deckastore.hpp"
+#include "../include/Config/Config.hpp"
 
 #include "../include/Client/Client.hpp"
 #include "../include/Server/Server.hpp"
@@ -11,7 +11,6 @@
 // TODO: Keep checking if config file has been changed and reload if it has been
 // TODO: Installer
 
-//int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
 int main(int argc, char** argv) {
     setbuf(stdout, nullptr);
     setbuf(stderr, nullptr);
@@ -86,3 +85,21 @@ int main(int argc, char** argv) {
     nx_sock_cleanup();
     return ret;
 }
+
+#ifdef _WIN32
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, int nCmdShow) {
+#ifdef _DEBUG
+    AllocConsole();
+    AttachConsole(GetCurrentProcessId());
+
+    freopen("CON", "w", stdout);
+    freopen("CON", "w", stderr);
+    freopen("CON", "r", stdin);
+#endif
+    int ret = main(__argc, __argv);
+#ifdef _DEBUG
+    FreeConsole();
+#endif
+    return ret;
+}
+#endif
