@@ -175,7 +175,7 @@ const DxWindow& dxwindow = dxstore.window;
     //constexpr ImWchar ranges[] = {0x0001, 0xFFFF, 0};
     //ImFont* header = io.Fonts->AddFontFromMemoryCompressedTTF(OpenSans_compressed_data, OpenSans_compressed_size, 32, nullptr, ranges);
     //io.Fonts->Build();
-    while (dxstatus != status_t::DONE) {
+    while (dxstatus != status_t::DONE && dxstatus != status_t::RESTARTING) {
         glfwWaitEventsTimeout(max_wait_time);
         if (glfwGetWindowAttrib(dxwindow.get(), GLFW_ICONIFIED)) {
             ImGui_ImplGlfw_Sleep(10);
@@ -193,7 +193,7 @@ const DxWindow& dxwindow = dxstore.window;
 
         // TODO: Font
         //ImGui::PushFont(header);
-        if (dxstatus == status_t::EXITING) {
+        if (dxstatus == status_t::EXITING || dxstatus == status_t::RESTART) {
             gui_show_waiting_tasks();
         } else if (self.socket == NX_INVALID_SOCKET) {
             if (glfwGetInputMode(dxstore.window.get(), GLFW_CURSOR) != GLFW_CURSOR_NORMAL)
