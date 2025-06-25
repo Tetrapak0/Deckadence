@@ -1,6 +1,6 @@
 # Deckadence
 <p align="center">
-  <img src="https://github.com/Tetrapak0/NexusShell/blob/main/icon.png?raw=true" alt="Icon"/>
+  <img src="https://github.com/Tetrapak0/Deckadence/blob/main/icon.png?raw=true" alt="Icon"/>
 </p>
 
 ## Index:
