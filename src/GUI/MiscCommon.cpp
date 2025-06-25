@@ -4,7 +4,7 @@
 
 void gui_draw_settings() {
     static Deckastore& dxstore = Deckastore::get();
-    static int mode = 0;
+    static int mode = static_cast<int>(dxstore.get_mode());
     static bool discoverable = dxstore.get_discoverable();
     static int port = dxstore.get_port();
     ImGui::OpenPopup("Settings");
@@ -34,7 +34,7 @@ void gui_draw_settings() {
             port = dxstore.get_port();
         }
         ImGui::SameLine();
-        if (!mode && port == dxstore.get_port()) {
+        if (mode == static_cast<int>(dxstore.get_mode()) && port == dxstore.get_port()) {
             ImGui::BeginDisabled(discoverable == dxstore.get_discoverable());
             if (ImGui::Button("Apply", ImVec2(64, 24))) {
                 json& config = dxstore.get_config();
