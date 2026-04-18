@@ -186,7 +186,8 @@ class Message<MessageType::ThumbnailDelivery> final : MessageBase {
     void dispatch(Client& dxclient) override {
         uint64_t uuid = 0;
         memcpy(&uuid, msg.data(), sizeof(uint64_t));
-        string path = (get_cfg_dir() / std::to_string(dxclient.get_uuid()) / dxclient.get_current_profile_ref().name / (std::to_string(uuid) + ".png")).generic_string();
+        fs::path profileDir = get_cfg_dir() / std::to_string(dxclient.get_uuid()) / dxclient.get_current_profile_ref().name;
+        fs::create_directories(profileDir);
         printf("Received thumbnail for %llu\n", uuid);
         if (!dxclient.pendingTextures.contains(uuid))
             return;
@@ -194,7 +195,7 @@ class Message<MessageType::ThumbnailDelivery> final : MessageBase {
         dxclient.pendingTextures[uuid]->create_from_memory(
             reinterpret_cast<const uint8_t*>(msg.data()),
             msg.size(), 
-            path.c_str());
+            fs::path(profileDir / (std::to_string(uuid)+".png")).generic_string().c_str());
         dxclient.pendingTextures.erase(uuid);
     }
 public:
