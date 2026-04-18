@@ -95,7 +95,9 @@ void Item::properties_apply() {
         this->m_thumbnail = this->thumbnail;
     } else {
         if (this->m_thumbnail != this->thumbnail) {
-            this->m_thumbnail->write_png((get_cfg_dir() / std::to_string(this->parent_profile.parent.get_uuid()) / this->parent_profile.name / (std::to_string(this->get_uuid()) + ".png")).generic_string().c_str());
+            fs::path profileDir(get_cfg_dir() / std::to_string(this->parent_profile.parent.get_uuid()) / this->parent_profile.name);
+            fs::create_directories(profileDir);
+            this->m_thumbnail->write_png((profileDir / (std::to_string(this->get_uuid()) + ".png")).generic_string().c_str());
         }
         this->thumbnail = this->m_thumbnail;
     }

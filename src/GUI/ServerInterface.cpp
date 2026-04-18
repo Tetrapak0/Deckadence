@@ -224,7 +224,9 @@ void draw_top_bar() {
             string label = it.second.get_nickname().empty() ? std::to_string(it.first) : it.second.get_nickname();
             const bool selected = (selected_uuid == it.first);
             if (ImGui::Selectable(label.c_str(), selected)) {
+                dxstore.lock.unlock();
                 dxstore.set_selected_uuid(it.first);
+                dxstore.lock.lock();
                 accommodate_window_size();
             }
             if (selected)

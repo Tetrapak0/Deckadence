@@ -153,6 +153,8 @@ class Message<MessageType::ThumbnailRequest> final : MessageBase {
         memcpy(&item_uuid, msg.data(), sizeof(uint64_t));
         string path = (get_cfg_dir() / std::to_string(dxclient.get_uuid()) / dxclient.get_current_profile_ref().name / (std::to_string(item_uuid) + ".png")).generic_string();
         printf("%s\n", path.c_str());
+        if (!fs::exists(path))
+            return;
 
         std::ifstream reader(path, std::ios::binary | std::ios::ate);
 

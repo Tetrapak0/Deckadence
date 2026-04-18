@@ -181,7 +181,7 @@ void Client::draw_properties() {
         ImGui::SameLine();
         static constexpr unsigned char step      = 1;
         static constexpr unsigned char step_fast = 10;
-        ImGui::InputScalar("##rows", ImGuiDataType_U8, &dxprofile.m_columns, &step, &step_fast, "%d");
+        ImGui::InputScalar("##rows", ImGuiDataType_U8, &dxprofile.m_rows, &step, &step_fast, "%d");
         if (dxprofile.m_rows * dxprofile.m_columns > 256)
             dxprofile.m_rows = dxprofile.rows;
         ImGui::Text("Columns");
