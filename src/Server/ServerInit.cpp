@@ -42,9 +42,8 @@ int begin_comm_loop(uint64_t uuid) {
 
         printf("%llu\n", header);
 
-        header = ntohll(header);
-        uint32_t len = header >> 32;
-        uint32_t type = header & 0xFFFFFFFF;
+        uint32_t len = ntohl(header >> 32);
+        uint32_t type = ntohl(header & 0xFFFFFFFF);
 
         printf("%llu\n", header);
 

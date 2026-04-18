@@ -4,9 +4,13 @@
 
 #include "ItemTypeRegistry.hpp"
 #include "Client/Client.hpp"
-#include "GUI/GUI.hpp"
 #include "GUI/DxWindow.hpp"
 #include "Server/DiscoveryService.hpp"
+
+#ifdef __linux__
+#pragma push_macro("None")
+#undef None
+#endif
 
 #include <unordered_map>
 
@@ -27,11 +31,6 @@ enum class mode_t {
 };
 }
 
-#ifdef __linux__
-#pragma push_macro("None")
-#undef None
-#endif
-
 enum class tasks : uint64_t {
     None            = 0,
     SingleInstance  = 1,
@@ -40,10 +39,6 @@ enum class tasks : uint64_t {
     Discovery       = 4,
     Setup           = 8
 };
-
-#ifdef __linux__
-#pragma pop_macro("None")
-#endif
 
 inline tasks operator|(tasks lhs, tasks rhs) {
     return static_cast<tasks>(static_cast<uint64_t>(lhs) | static_cast<uint64_t>(rhs));
@@ -151,3 +146,7 @@ public:
 private:
     Deckastore() = default;
 };
+
+#ifdef __linux__
+#pragma pop_macro("None")
+#endif
