@@ -1,61 +1,70 @@
-#include "../../include/Server/Server.hpp"
-#include "../../include/Client/Client.hpp"
-#include "../../include/Config/Config.hpp"
-#include "../../include/Config/Deckastore.hpp"
+#include "Server/Server.hpp"
+#include "Client/Client.hpp"
+#include "Config/Config.hpp"
+#include "Config/Deckastore.hpp"
+#include "Server/Message.hpp"
 
 #include <thread>
 
 using std::thread;
 using std::vector;
 
-int parse_message(Client& client, const string& msg) {
-    printf("msg: %s; ", msg.c_str());
-    // TODO: Add prefix for each plugin
-    if (msg[0] == DX_EXECUTE_BYTE) {
-        for (int i = 1; i < msg.length(); ++i) {
-            if (isdigit(msg[i])) continue;
-            return -1;
-        }
-        printf("%llu\n", strtoull(msg.substr(1, msg.length()-1).c_str(), nullptr, 10));
-        int idx = strtoull(msg.substr(1, msg.length()-1).c_str(), nullptr, 10);
-        if (!strcmp(client.get_current_profile_ref().root->items[idx]->get_typename(), "Folder")) {
-            client.nav_history.emplace_back(msg);
-        } else if (!strcmp(client.get_current_profile_ref().root->items[idx]->get_typename(), "Go up")) {
-            client.nav_history.pop_back();
-        }
-        client.get_current_profile_ref().root->items[idx]->execute();
-    }
-    return 0;
-}
-
 int begin_comm_loop(uint64_t uuid) {
     Deckastore& dxstore = Deckastore::get();
     Client& client = dxstore.retrieve_client(uuid);
-    const status_t& dxstatus = dxstore.get_status();
-    char buf[1024] = {0};
     client.update_config();
+    const status_t& dxstatus = dxstore.get_status();
     pollfd pole{client.socket, POLLIN};
     do {
         int res = poll(&pole, 1, 2000);
         pole.revents = 0;
-        switch (res) {
-            case 0: {
-            } case NX_SOCKET_ERROR: {
+        if (!res)
+            continue;
+        if (res < 0)
+            break;
+
+        if (client.get_nickname().empty())
+            printf("Received message from %llu\n", client.get_uuid());
+        else
+            printf("Received message from %s\n", client.get_nickname().c_str());
+
+        uint64_t header = 0;
+
+        client.res = recvn(client.socket, reinterpret_cast<char*>(&header), sizeof(uint64_t), NULL);
+        if (client.res <= 0) {
+            printf("%d\n", WSAGetLastError());
+            break;
+        }
+
+        printf("%llu\n", header);
+
+        header = ntohll(header);
+        uint32_t len = header >> 32;
+        uint32_t type = header & 0xFFFFFFFF;
+
+        printf("%llu\n", header);
+
+        printf("size: %lu, type: %lu\n", len, type);
+
+        string buf(len, '\0');
+
+        client.res = recvn(client.socket, buf.data(), len, NULL);
+        if (client.res <= 0) {
+            printf("%d\n", WSAGetLastError());
+            break;
+        }
+
+        client.lock.lock();
+        switch (static_cast<MessageType>(type)) {
+            case MessageType::Execute: {
+                (void)Message<MessageType::Execute>(buf, client);
                 break;
-            } default: {
-                if (client.get_nickname().empty())
-                    printf("Received message from %llu\n", client.get_uuid());
-                else
-                    printf("Received message from %s\n", client.get_nickname().c_str());
-                // TODO: change length of recv
-                client.res = recv(client.socket, buf, 1024, NULL);
-                if (client.res > 0) {
-                    client.lock.lock();
-                    parse_message(client, buf);
-                    client.lock.unlock();
-                }
+            } case MessageType::ThumbnailRequest: {
+                (void)Message<MessageType::ThumbnailRequest>(buf, client);
+                break;
             }
         }
+        client.lock.unlock();
     } while (!static_cast<int>(dxstatus) && client.res > 0 && client.send_res > 0);
 
     dxstore.disconnect_client(client.get_uuid(), "Server closed.");
@@ -73,33 +82,32 @@ bool check_client_uuid(string buf) {
     return true;
 }
 
-Client accept_client(socket_t sock) {
+socket_t accept_client(socket_t sock, uint64_t& uuid) {
     Deckastore& dxstore = Deckastore::get();
     const socket_t client_socket = accept(sock, nullptr, nullptr); // TODO: Correspond the client with an IP
     if (client_socket == NX_INVALID_SOCKET) {
         fprintf(stderr, "Failed to accept client.\n");
-        return Client(0, client_socket);
+        uuid = DX_INVALID_UUID;
+        return NX_INVALID_SOCKET;
     }
     char buf[21];
     if (int res = recv(client_socket, buf, 21, NULL); res > 0) {
-        // TODO: Implement a blacklist feature
         buf[res-1] = '\0'; // null terminator is counted too
-        uint64_t uuid = strtoull(buf, nullptr, 10);
+        uuid = strtoull(buf, nullptr, 10);
         // TODO: client_exists should probably be handled in insert_client
         if (check_client_uuid(buf) && !dxstore.client_exists(uuid)) {
-            Client nclient(uuid, client_socket);
-            printf("%llu connected.\n", nclient.get_uuid());
-            return nclient;
+            printf("%llu connected.\n", uuid);
+            return client_socket;
         }
     }
     nx_sock_close(client_socket);
-    Client nclient(0, NX_INVALID_SOCKET);
-    return nclient;
+    uuid = DX_INVALID_UUID;
+    return NX_INVALID_SOCKET;
 }
 
 int begin_listen_loop() {
     Deckastore& dxstore = Deckastore::get();
-    dxstore.add_task(tasks::SERVER);
+    dxstore.add_task(tasks::Server);
     vector<NetworkInterface>& interfaces = dxstore.get_ifaces_ref();
 
     vector<std::unique_ptr<thread>> client_threads;
@@ -119,12 +127,12 @@ int begin_listen_loop() {
         printf("Connection request(s) received.\n");
         for (auto& p : pollees) {
             if (p.revents) {
-                // TODO: Avoid unneeded construction of objects
-                Client nclient(accept_client(p.fd));
-                if (nclient.socket == NX_INVALID_SOCKET)
+                uint64_t uuid = DX_INVALID_UUID;
+                socket_t sock = accept_client(p.fd, uuid);
+                if (sock == NX_INVALID_SOCKET || uuid == DX_INVALID_UUID)
                     continue;
-                dxstore.insert_client(nclient.get_uuid(), nclient.socket);
-                client_threads.push_back(std::make_unique<thread>(begin_comm_loop, nclient.get_uuid()));
+                dxstore.insert_client(uuid, sock);
+                client_threads.push_back(std::make_unique<thread>(begin_comm_loop, uuid));
                 p.revents = 0;
             }
         }
@@ -135,7 +143,7 @@ int begin_listen_loop() {
         if (iface.listen_socket != NX_INVALID_SOCKET)
             nx_sock_close(iface.listen_socket);
     }
-    dxstore.remove_task(tasks::SERVER);
+    dxstore.remove_task(tasks::Server);
     return 0;
 }
 
@@ -146,8 +154,8 @@ int start_server_sequence() {
         iface.listen_socket = create_socket(iface);
         if (iface.listen_socket == NX_INVALID_SOCKET) {
             fprintf(stderr, "Invalid socket was returned.\n");
-            dxstore.remove_task(tasks::SERVER);
-            dxstore.set_status(status_t::DONE);
+            dxstore.remove_task(tasks::Server);
+            dxstore.set_status(status_t::Done);
             return -1;
         }
     }
@@ -155,7 +163,7 @@ int start_server_sequence() {
     thread t_discovery([&discovery = Deckastore::get().get_discoverable()](){
         Deckastore& dxstore = Deckastore::get();
         // Allows discovery to be toggled without a restart
-        while (dxstore.get_status() == status_t::RUNNING) {
+        while (dxstore.get_status() == status_t::Running) {
             if (discovery) start_discovery_service();
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }

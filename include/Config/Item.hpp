@@ -1,10 +1,12 @@
 #pragma once
 
-#define DX_ITEM_MAX 256
+#define DX_ITEMS_MAX 256
 
 #include <string>
 
 #include "../../external/jsonhpp/json.hpp"
+
+#include "../GUI/Texture.hpp"
 
 using std::string;
 using std::shared_ptr;
@@ -15,110 +17,59 @@ using std::vector;
 using json = nlohmann::json;
 
 class Profile;
+class FolderItem;
 
-class FolderItem; // this is stupid. I hate it
-
-// TODO: Give buttons a UUID so thumbnail assignment is easier
 class Item {
 public:
-    friend void gui_draw_item_properties();
-
     string label;
     json* config = nullptr;
     Profile& parent_profile;
     FolderItem* parent = nullptr;
 
+    bool has_thumbnail = false;
+    shared_ptr<Texture> thumbnail = std::make_shared<Texture>(Texture());
+
+    // bool custom_style = false;
+    // TODO: widgets
+    // TODO: Add clock item/widget
+    // Vec2<int> u_size; // Size in button units // TODO: Windows 8 style grids
+
     virtual const char* get_typename() {return nullptr;}
 
-    virtual void draw_properties() = 0;
-    virtual void properties_cancel() = 0;
-    virtual void properties_apply() = 0;
-    virtual bool prop_apply_disable() = 0;
+    virtual void draw_properties();
+    virtual void properties_cancel();
+    void         properties_init(const char* _typename);
+    virtual void properties_apply();
+    // This function specifies whether the "Apply" button in the properties window
+    //      is enabled or disabled. It also specifies whether the button itself is
+    //      enabled or disabled.
+    virtual bool disabled() = 0;
+    Item*        copy_properties(Item& other);
+    virtual bool openable_in_editor();
+    uint64_t     get_uuid() const;
+    int          set_uuid(uint64_t uuid);
+    // virtual void draw();
     virtual void execute() = 0;
 
-    virtual ~Item() = default;
+    virtual ~Item();
+
+    Item(const Item& other);
+    explicit Item(const Item* other);
+    Item(const Item&& other) noexcept;
+
+    Item& operator=(const Item& other);
 protected:
-    // for editor
+    // for editor // TODO: Maybe make private
     string m_label = label;
+    bool m_has_thumbnail = has_thumbnail;
+    shared_ptr<Texture> m_thumbnail = thumbnail;
 
     Item() = delete;
-    explicit Item(json* config, Profile& parent_profile, FolderItem* parent) : config(config), parent_profile(parent_profile), parent(parent) {}
+    explicit Item(json* config, Profile& parent_profile, FolderItem* parent);
+private:
+    uint64_t m_uuid = 0;
 };
 
-class ExecutableItem : public Item {
-public:
-    string command;
-    string args;
-    string cwd;
-    bool admin = false;
-    bool console = false;
-#ifndef _WIN32
-    vector<string> strargv;
-    vector<char*> argv;
-#endif
-    void args_to_argv();
-
-    explicit ExecutableItem(json* config, Profile& parent_profile, FolderItem* parent);
-
-    const char* get_typename() override {return "Executable";}
-    void draw_properties() override;
-    void properties_cancel() override;
-    void properties_apply() override;
-    bool prop_apply_disable() override;
-    void execute() override;
-protected:
-    string m_command = command;
-    string m_args = args;
-    string m_cwd = cwd;
-    bool m_admin = admin;
-    bool m_console = console;
-};
-
-class FilesystemAndURLItem : public Item {
-public:
-    string path;
-
-    explicit FilesystemAndURLItem(json* config, Profile& parent_profile, FolderItem* parent);
-
-    const char* get_typename() override {return "Filesystem / URL";}
-    void draw_properties() override;
-    void properties_cancel() override;
-    void properties_apply() override;
-    bool prop_apply_disable() override;
-    void execute() override;
-protected:
-    string m_path = path;
-};
-
-class FolderItem : public Item {
-public:
-    vector<shared_ptr<Item>> items;
-
-    json& request_config(int idx);
-    const char* get_typename() override {return "Folder";}
-    void draw_properties() override;
-    void properties_cancel() override;
-    void properties_apply() override;
-    bool prop_apply_disable() override;
-    void execute() override;
-
-    explicit FolderItem(json* config, Profile& parent_profile, FolderItem* parent);
-};
-
-class GoUpItem : public Item {
-public:
-    const char* get_typename() override {return "Go up";}
-    void draw_properties() override;
-    void properties_cancel() override;
-    void properties_apply() override;
-    bool prop_apply_disable() override;
-    void execute() override;
-
-    explicit GoUpItem(json* config, Profile& parent_profile, FolderItem* parent);
-};
-
-// TODO: Add clock item/widget
-// TODO: widgets
-// TODO: Implement script buttons
-// TODO: Add optional Windows 8 style grids
+// TODO: Implement multi-action buttons
 // TODO: Add keypress buttons
+// TODO: Make FolderItem and any other such widgets Views

@@ -1,7 +1,8 @@
-#include "../../include/Config/Deckastore.hpp"
-#include "../../include/Config/Config.hpp"
-#include "../../include/Client/Client.hpp"
-#include "../../include/Client/DiscoveryListenerService.hpp"
+#include "Config/Deckastore.hpp"
+#include "Config/Config.hpp"
+#include "Client/Client.hpp"
+#include "Client/DiscoveryListenerService.hpp"
+#include "Server/Message.hpp"
 
 #include <thread>
 #include <string>
@@ -13,71 +14,61 @@ using std::vector;
 
 void begin_receiver_loop() {
     Deckastore& dxstore = Deckastore::get();
-    dxstore.add_task(tasks::CLIENT);
+    dxstore.add_task(tasks::Client);
     const status_t& dxstatus = dxstore.get_status();
     Client& dxclient = dxstore.retrieve_current_client();
-    string buf;
+
     pollfd pole{dxclient.socket, POLLIN, 0};
     do {
-        buf.clear();
-        buf.resize(1024*256, '\0');
         int res = poll(&pole, 1, 2000);
-        if (!res) {
+        if (!res)
             continue;
-        } else if (res == NX_SOCKET_ERROR) {
+        if (res == NX_SOCKET_ERROR)
             break;
-        }
-        // TODO: Make sure entire message is received.
-        dxclient.res = recv(dxclient.socket, buf.data(), buf.capacity(), 0);
-        if (dxclient.res == NX_INVALID_SOCKET) {
-            dxclient.res = 0;
+
+        uint64_t header = 0;
+        dxclient.res = recvn(dxclient.socket, &header, sizeof(uint64_t), 0);
+        if (dxclient.res <= 0) {
+            printf("%d\n", WSAGetLastError());
             break;
-        }
-        buf[dxclient.res] = '\0';
-        vector<string> msg_queue;
-        size_t current = 0;
-        for (size_t i = 0; i < dxclient.res; ++i) {
-            if (buf[i] == '\0') {
-                msg_queue.emplace_back(&buf[current]);
-                current = i + 1;
-            }
-        }
-        if (current < dxclient.res) {
-            msg_queue.emplace_back(&buf[current]);
         }
 
-        for (auto& msg : msg_queue) {
-            printf("msg: %s\n", msg.c_str());
-            switch (msg[0]) {
-                case DX_CONFIG_BYTE: {
-                    fs::path dkd_dir = get_cfg_dir();
-                    fs::create_directories(dkd_dir);
-                    json cfg = json::parse(msg.substr(1, msg.length()-1));
-                    std::ofstream writer(dkd_dir / (std::to_string(dxclient.get_uuid()) + ".json"));
-                    writer << cfg.dump(4);
-                    writer.close();
-                    // TODO: pass json to .configure(); overload
-                    dxclient.configure();
-                    for (auto& nav : dxclient.nav_history)
-                        dxclient.get_current_profile_ref().root->items[strtoull(nav.c_str(), nullptr, 10)]->execute();
-                    break;
-                } case DX_DISCONNECT_BYTE: {
-                    dxclient.res = 0;
-                    break;
-                } case DX_EXECUTE_BYTE: {
-                    int idx = strtoull(msg.substr(1, msg.length()-1).c_str(), nullptr, 10);
-                    Item* tmp = dxclient.get_current_profile_ref().root->items[idx].get();
-                    if (!strcmp(tmp->get_typename(), "Folder")) {
-                        tmp->execute();
-                        dxclient.nav_history.push_back(std::to_string(idx));
-                    } else if (!strcmp(tmp->get_typename(), "Go up")) {
-                        tmp->execute();
-                        dxclient.nav_history.pop_back();
-                    }
-                    break;
-                } default: {
-                    break;
-                }
+        printf("%llu\n", header);
+
+        header = ntohll(header);
+        uint32_t len  = header >> 32;
+        uint32_t type = header & 0xFFFFFFFF;
+
+        printf("%llu\n", header);
+
+        printf("size: %lu, type: %lu\n", len, type);
+
+        string buf(len, '\0');
+
+        dxclient.res = recvn(dxclient.socket, buf.data(), len, 0);
+        if (dxclient.res <= 0) {
+            printf("%d\n", WSAGetLastError());
+            break;
+        }
+
+        // Thanks for runtime template dispatch, C++ committee
+        switch (static_cast<MessageType>(type)) {
+            case MessageType::Config: {
+                (void)Message<MessageType::Config>(buf, dxclient);
+                break;
+            } case MessageType::Disconnect: {
+                (void)Message<MessageType::Disconnect>(buf, dxclient);
+                break;
+            } case MessageType::Execute: {
+                (void)Message<MessageType::Execute>(buf, dxclient);
+                break;
+            } case MessageType::ThumbnailDelivery: {
+                (void)Message<MessageType::ThumbnailDelivery>(buf, dxclient);
+                break;
+            } default: {
+                // Look up plugin message types when we add plugin support.
+                // Pass to plugin's master event dispatch because no runtime
+                // template dispatch
             }
         }
     } while (!static_cast<int>(dxstatus) && dxclient.res > 0 && dxclient.send_res > 0);
@@ -86,14 +77,13 @@ void begin_receiver_loop() {
     nx_sock_close(dxclient.socket);
     dxclient.socket = NX_INVALID_SOCKET;
     dxclient.get_current_profile_ref().root = &dxclient.get_current_profile_ref().items;
-    dxclient.nav_history.clear();
-    dxstore.remove_task(tasks::CLIENT);
+    dxstore.remove_task(tasks::Client);
 }
 
 void begin_client_loop() {
     Deckastore& dxstore = Deckastore::get();
     const status_t& dxstatus = dxstore.get_status();
-    while (dxstatus == status_t::RUNNING) {
+    while (dxstatus == status_t::Running) {
         if (dxstore.retrieve_current_client().socket == NX_INVALID_SOCKET) {
             start_listening();
         } else {
@@ -119,7 +109,6 @@ uint64_t find_uuid() {
         writer.close();
         return uuid;
     }
-    // ffs if this ever runs for anybody...
     std::ofstream writer(dkd_dir / "config.json");
     json cfg;
     cfg["uuid"] = uuid;

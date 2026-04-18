@@ -1,15 +1,13 @@
 #include "../../include/Config/Deckastore.hpp"
 #include "../../include/Config/Config.hpp"
 #include "../../include/Config/Item.hpp"
+#include "../../include/Config/ExecutableItem.hpp"
+#include "../../include/Config/FolderItem.hpp"
 #include "../../include/GUI/GUI.hpp"
 #include "../../include/Utilities/FileDialog.hpp"
 
 ExecutableItem::ExecutableItem(json* config, Profile& parent_profile, FolderItem* parent) : Item(config, parent_profile, parent) {
     if (config) {
-        if (config->contains("label") && (*config)["label"].is_string()) {
-            this->label = (*config)["label"].get<string>();
-            this->m_label = label;
-        }
         if (config->contains("command") && (*config)["command"].is_string()) {
             this->command = (*config)["command"].get<string>();
             this->m_command = command;
@@ -30,12 +28,15 @@ ExecutableItem::ExecutableItem(json* config, Profile& parent_profile, FolderItem
             this->console = (*config)["console"].get<bool>();
             this->m_console = console;
         }
-        if (Deckastore::get().get_mode() == Deckadence::mode_t::SERVER)
+        if (Deckastore::get().get_mode() == Deckadence::mode_t::Server)
             args_to_argv();
     }
 }
 
 void ExecutableItem::draw_properties() {
+    ImGui::BeginDisabled();
+    ImGui::TextWrapped("(i) Please do not use environment variables. Write your full user path (if applicable), not ~/");
+    ImGui::EndDisabled();
     ImGui::AlignTextToFramePadding();
     ImGui::Text("Path: ");
     ImGui::SameLine();
@@ -48,9 +49,9 @@ void ExecutableItem::draw_properties() {
     }
     ImGui::BeginDisabled();
 #ifdef _WIN32
-    ImGui::TextWrapped("(i) If you cannot see some shortcuts, try looking at the public desktop or select the \"Filesystem / URL\" type above.");
+    ImGui::TextWrapped("(i) If you cannot see some shortcuts, try looking at the public desktop or select the \"Filesystem / URL\" type in the \"General\" tab.");
 #else
-    ImGui::TextWrapped("(i) If you cannot see some shortcuts, try selecting the \"Filesystem / URL\" type above.");
+    ImGui::TextWrapped("(i) If you cannot see some shortcuts, try selecting the \"Filesystem / URL\" type in the \"General\" tab.");
 #endif
     ImGui::EndDisabled();
     ImGui::AlignTextToFramePadding();
@@ -88,12 +89,11 @@ void ExecutableItem::draw_properties() {
 #endif
 }
 
-bool ExecutableItem::prop_apply_disable() {
+bool ExecutableItem::disabled() {
     return this->m_command.empty();
 }
 
 void ExecutableItem::properties_cancel() {
-    this->m_label = this->label;
     this->m_command = this->command;
     this->m_args = this->args;
     this->m_cwd = this->cwd;
@@ -102,26 +102,16 @@ void ExecutableItem::properties_cancel() {
 }
 
 void ExecutableItem::properties_apply() {
-    this->label = this->m_label;
     this->command = this->m_command;
     this->args = this->m_args;
     this->cwd = this->m_cwd;
     this->admin = this->m_admin;
     this->console = this->m_console;
-    int idx = Deckastore::get().draw_item_properties;
-    if (!config)
-        this->config = &this->parent->request_config(idx);
-    else
-        this->config->clear();
-    (*this->config)["idx"] = idx;
-    (*this->config)["label"] = this->label;
-    (*this->config)["type"] = this->get_typename();
     (*this->config)["command"] = this->command;
     (*this->config)["args"] = this->args;
     (*this->config)["cwd"] = this->cwd;
     (*this->config)["admin"] = this->admin;
     (*this->config)["console"] = this->console;
-    parent_profile.parent.update_config();
     this->args_to_argv();
 }
 

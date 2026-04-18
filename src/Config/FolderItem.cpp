@@ -1,22 +1,20 @@
-#include "../../include/Config/Deckastore.hpp"
-#include "../../include/Config/Config.hpp"
-#include "../../include/Config/Item.hpp"
-#include "../../include/GUI/GUI.hpp"
-#include "../../include/Utilities/FileDialog.hpp"
+#include "Config/Deckastore.hpp"
+#include "Config/Config.hpp"
+#include "Config/Item.hpp"
+#include "Config/ExecutableItem.hpp"
+#include "Config/FolderItem.hpp"
+#include "Utilities/FileDialog.hpp"
 
 FolderItem::FolderItem(json* config, Profile& parent_profile, FolderItem* parent) : Item(config, parent_profile, parent) {
-    // TODO: Force go up button by default
-    this->items.reserve(DX_ITEM_MAX);
+    if (!this->parent_profile.root)
+        this->parent_profile.root = this;
+    this->items.reserve(DX_ITEMS_MAX);
     Deckastore& dxstore = Deckastore::get();
     ItemTypeRegistry& type_registry = dxstore.type_registry;
     if (config) {
-        (*config)["items"].get_ref<json::array_t&>().reserve(DX_ITEM_MAX);
+        (*config)["items"].get_ref<json::array_t&>().reserve(DX_ITEMS_MAX);
         for (int i = 0; i < this->parent_profile.rows*this->parent_profile.columns; ++i) {
             this->items.emplace_back(std::make_shared<ExecutableItem>(ExecutableItem(nullptr, this->parent_profile, this)));
-        }
-        if (config->contains("label") && (*config)["label"].is_string()) {
-            this->label = (*config)["label"].get<string>();
-            this->m_label = label;
         }
         for (auto& item : (*config)["items"]) {
             if (!item.contains("idx"))
@@ -44,39 +42,27 @@ json& FolderItem::request_config(int idx) {
 }
 
 void FolderItem::draw_properties() {
-    ImGui::AlignTextToFramePadding();
-    ImGui::BeginDisabled();
-    ImGui::TextWrapped("(i) Right click folder to open in editor");
-    ImGui::EndDisabled();
 }
-
 void FolderItem::properties_cancel() {
-    this->m_label = label;
 }
 
 void FolderItem::properties_apply() {
-    this->label = m_label;
-    this->parent = this->parent_profile.root;
+    //this->parent = this->parent_profile.root; // TODO: Why? Pretty sure this is always set
     if (this->items.size() < this->parent_profile.rows*this->parent_profile.columns) {
         for (int i = this->items.size(); i < this->parent_profile.rows*this->parent_profile.columns; ++i) {
             this->items.emplace_back(std::make_shared<ExecutableItem>(ExecutableItem(nullptr, this->parent_profile, this->parent)));
         }
     }
-    int idx = Deckastore::get().draw_item_properties;
-    if (!config)
-        this->config = &this->parent->request_config(idx);
-    else if (!this->config->contains("items"))
-        this->config->clear();
-    (*this->config)["idx"] = idx;
-    (*this->config)["label"] = this->label;
-    (*this->config)["type"] = this->get_typename();
     if (!this->config->contains("items"))
         (*this->config)["items"] = json::array();
-    this->parent_profile.parent.update_config();
 }
 
-bool FolderItem::prop_apply_disable() {
+bool FolderItem::disabled() {
     return false;
+}
+
+bool FolderItem::openable_in_editor() {
+    return true;
 }
 
 void FolderItem::execute() {
@@ -90,14 +76,7 @@ void FolderItem::execute() {
 
 
 
-GoUpItem::GoUpItem(json* config, Profile& parent_profile, FolderItem* parent) : Item(config, parent_profile, parent) {
-    if (config) {
-        if (config->contains("label") && (*config)["label"].is_string()) {
-            this->label = (*config)["label"].get<string>();
-            this->m_label = label;
-        }
-    }
-}
+GoUpItem::GoUpItem(json* config, Profile& parent_profile, FolderItem* parent) : Item(config, parent_profile, parent) {}
 
 void GoUpItem::draw_properties() {
     ImGui::BeginDisabled();
@@ -105,35 +84,25 @@ void GoUpItem::draw_properties() {
     ImGui::EndDisabled();
 }
 
-void GoUpItem::properties_cancel() {
-    this->m_label = label;
-}
+void GoUpItem::properties_cancel() {}
 
-void GoUpItem::properties_apply() {
-    this->label = m_label;
-    int idx = Deckastore::get().draw_item_properties;
-    if (!config)
-        this->config = &this->parent->request_config(idx);
-    else
-        this->config->clear();
-    (*this->config)["idx"] = idx;
-    (*this->config)["label"] = this->label;
-    (*this->config)["type"] = this->get_typename();
+void GoUpItem::properties_apply() {}
 
-    this->parent_profile.parent.update_config();
-}
-
-bool GoUpItem::prop_apply_disable() {
+bool GoUpItem::disabled() {
     return this->parent_profile.root->parent ? false : true;
+}
+
+bool GoUpItem::openable_in_editor() {
+    return true;
 }
 
 void GoUpItem::execute() {
     if (this->parent_profile.root->parent) {
-        if (this->parent_profile.root->parent->items.size() < this->parent_profile.rows*this->parent_profile.columns) {
-            for (int i = this->parent_profile.root->parent->items.size(); i < this->parent_profile.rows*this->parent_profile.columns; ++i) {
-                this->parent_profile.root->parent->items.emplace_back(std::make_shared<ExecutableItem>(ExecutableItem(nullptr, this->parent_profile, this->parent)));
-            }
-        }
+        //if (this->parent_profile.root->parent->items.size() < this->parent_profile.rows*this->parent_profile.columns) {
+        //    for (int i = this->parent_profile.root->parent->items.size(); i < this->parent_profile.rows*this->parent_profile.columns; ++i) {
+        //        this->parent_profile.root->parent->items.emplace_back(std::make_shared<ExecutableItem>(ExecutableItem(nullptr, this->parent_profile, this->parent)));
+        //    }
+        //}
         this->parent_profile.root = this->parent_profile.root->parent;
     }
 }

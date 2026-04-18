@@ -6,13 +6,15 @@
  #include <dwmapi.h>
 #endif
 
-#include "../../include/GUI/GUI.hpp"
-#include "../../include/GUI/DxWindow.hpp"
-#include "../../include/GUI/Thumbnail.hpp"
+#include "GUI/GUI.hpp"
+#include "GUI/DxWindow.hpp"
+#include "GUI/Texture.hpp"
 
 #include "../../external/stb/stb_image.h"
 
-#include "../../include/icon.h"
+extern "C" {
+    #include "../../resources/icon.h"
+}
 
 GLFWwindow* DxWindow::get() const {
     return window;
@@ -30,6 +32,10 @@ void DxWindow::register_close_callback(const GLFWwindowclosefun callback) const 
 void DxWindow::register_resize_callback(const GLFWwindowsizefun callback) const {
     assert(window);
     glfwSetWindowSizeCallback(window, callback);
+}
+void DxWindow::register_move_callback(const GLFWwindowposfun callback) const {
+    assert(window);
+    glfwSetWindowPosCallback(window, callback);
 }
 
 void DxWindow::resize(const Vec2<int>& size) const {
@@ -73,6 +79,7 @@ int DxWindow::create(const char* title, const Vec2<int>& size, const int fullscr
     }
 
     const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    // glfwWindowHint(GLFW_SRGB_CAPABLE, GLFW_TRUE);
     glfwWindowHint(GLFW_RED_BITS, mode->redBits);
     glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
     glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
@@ -82,9 +89,8 @@ int DxWindow::create(const char* title, const Vec2<int>& size, const int fullscr
         window = glfwCreateWindow(size.x, size.y, title, nullptr, nullptr);
     } else if (fullscreen == -1) {
         // Windowed fullscreen
-        if (!auto_iconify) {
+        if (!auto_iconify)
             glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE);
-        }
         glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
         window = glfwCreateWindow(mode->width, mode->height, title, nullptr, nullptr);
     } else if (fullscreen == 1) {
@@ -98,8 +104,10 @@ int DxWindow::create(const char* title, const Vec2<int>& size, const int fullscr
         return -1;
     }
     glfwMakeContextCurrent(window);
+    // glEnable(0x8DB9); // GL_FRAMEBUFFER_SRGB
     glfwSwapInterval(1);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
     glfwSwapBuffers(window);
     glfwShowWindow(window);
 #ifdef _WIN32
@@ -107,11 +115,10 @@ int DxWindow::create(const char* title, const Vec2<int>& size, const int fullscr
     BOOL dark = TRUE;
     DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark, sizeof(dark));
 #endif
-    if (resizable) {
+    if (resizable)
         glfwSetWindowSizeLimits(window, min_size.x, min_size.y, max_size.x, max_size.y);
-    } else {
+    else
         glfwSetWindowSizeLimits(window, size.x, size.y, size.x, size.y);
-    }
     GLFWimage icon;
     int channels = 0;
     icon.pixels = stbi_load_from_memory(icon_png, icon_png_len, &icon.width, &icon.height, &channels, 4);

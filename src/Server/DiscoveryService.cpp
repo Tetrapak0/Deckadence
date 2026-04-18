@@ -60,7 +60,7 @@ int start_discovery_service() {
     Deckastore& dxstore = Deckastore::get();
     const status_t& dxstatus = dxstore.get_status();
     const bool& discoverable = dxstore.get_discoverable();
-    dxstore.add_task(tasks::DISCOVERY);
+    dxstore.add_task(tasks::Discovery);
     uint16_t port = dxstore.get_port();
     vector<NetworkInterface>& interfaces = dxstore.get_ifaces_ref();
 
@@ -76,15 +76,15 @@ int start_discovery_service() {
         setsockopt(iface.discovery_sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&reuse, sizeof(reuse));
     #endif
 
-        struct sockaddr_in addr{};
-        addr.sin_family = AF_INET;
-        addr.sin_addr.s_addr = inet_addr(iface.addr.to_string().c_str());
-        addr.sin_port = htons(MCAST_PORT);
+        struct sockaddr_in loc_addr{};
+        loc_addr.sin_family = AF_INET;
+        loc_addr.sin_addr.s_addr = inet_addr(iface.ipv4.to_string().c_str());
+        loc_addr.sin_port = htons(MCAST_PORT);
         struct ip_mreq mreq{};
         mreq.imr_multiaddr.s_addr = inet_addr(MCAST_IP);
-        mreq.imr_interface.s_addr = inet_addr(iface.addr.to_string().c_str());
+        mreq.imr_interface.s_addr = inet_addr(iface.ipv4.to_string().c_str());
 
-        bind(iface.discovery_sock, (sockaddr*)&addr, sizeof(addr));
+        bind(iface.discovery_sock, (sockaddr*)&loc_addr, sizeof(loc_addr));
 
         setsockopt(iface.discovery_sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char*)&mreq, sizeof(mreq));
     }
@@ -94,7 +94,7 @@ int start_discovery_service() {
     gethostname(hn, 253);
     while (!static_cast<int>(dxstatus) && discoverable) {
         for (auto& iface : interfaces) {
-            string msg = string(un) + "@" + hn + " (" + iface.addr.to_string() + ":" + std::to_string(port) + ")";
+            string msg = string(un) + "@" + hn + " (" + iface.ipv4.to_string() + ":" + std::to_string(port) + ")";
             sendto(iface.discovery_sock, msg.c_str(), msg.length(), 0, (sockaddr*)&mcast_addr, sizeof(mcast_addr));
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
@@ -103,7 +103,7 @@ int start_discovery_service() {
     for (auto& iface : interfaces) {
         nx_sock_close(iface.discovery_sock);
     }
-    dxstore.remove_task(tasks::DISCOVERY);
+    dxstore.remove_task(tasks::Discovery);
     return 0;
 }
 

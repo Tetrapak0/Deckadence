@@ -10,6 +10,25 @@
 
 #include "../../include/Utilities/FileDialog.hpp"
 
+string nfd_open_image() {
+    NFD_Init();
+    const DxWindow& dxwindow = Deckastore::get().window;
+    nfdwindowhandle_t nfdwh{};
+    NFD_GetNativeWindowFromGLFWWindow(dxwindow.get(), &nfdwh);
+    nfdu8filteritem_t nfdfilter[1]{{"Images", "png,jpg,jpeg,gif,bmp,psd"}};
+    nfdopendialogu8args_t nfdargs{};
+    nfdargs.defaultPath = nullptr;
+    nfdargs.filterList = nfdfilter;
+    nfdargs.filterCount = 1;
+    nfdargs.parentWindow = nfdwh;
+    nfdchar_t* out = nullptr;
+    nfdresult_t res = NFD_OpenDialogU8_With(&out, &nfdargs);
+    NFD_Quit();
+    if (res != NFD_OKAY)
+        return "";
+    return out;
+}
+
 string nfd_open_file() {
     NFD_Init();
     const DxWindow& dxwindow = Deckastore::get().window;

@@ -9,24 +9,25 @@
 
 #include "../../external/OpenSans/OpenSans.h"
 
+#include <memory>
+using std::shared_ptr;
+
+#include "Texture.hpp"
+
 constexpr double max_wait_time = 1.0f / 60.0f;
 constexpr ImGuiWindowFlags modalflags = ImGuiWindowFlags_NoMove |
                                         ImGuiWindowFlags_NoResize |
                                         ImGuiWindowFlags_NoCollapse |
                                         ImGuiWindowFlags_NoDocking;
 
-extern void gui_set_colors();
-extern void gui_set_style();
-extern void gui_close_dialog();
-extern void gui_show_waiting_tasks();
-extern void gui_draw_settings();
-extern void gui_init_context();
+void gui_set_colors();
+void gui_set_style();
+void gui_close_dialog();
+void gui_show_waiting_tasks();
+void gui_draw_settings();
+void gui_init_context(GLFWwindowposfun move_callback = nullptr, GLFWwindowsizefun resize_callback = nullptr);
 #ifdef _DEBUG
-extern void gui_draw_performance();
+void gui_draw_performance();
 #endif
 
-extern void accommodate_window_size();
-
-extern void glfwWindowSizeCallback(GLFWwindow* window, int width, int height);
-
-extern bool window_resized;
+void gui_overlay_texture(const ImVec2& max_size, const shared_ptr<Texture>& texture);

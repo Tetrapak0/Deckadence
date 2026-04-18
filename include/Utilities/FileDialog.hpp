@@ -11,6 +11,7 @@
 
 using std::string;
 
+extern string nfd_open_image();
 extern string nfd_open_file();
 extern string nfd_open_exe();
 extern string nfd_open_dir();

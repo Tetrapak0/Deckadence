@@ -4,7 +4,8 @@
 
 void gui_show_waiting_tasks() {
     static Deckastore& dxstore = Deckastore::get();
-    ImGui::OpenPopup("Exiting Deckadence");
+    if (!ImGui::IsPopupOpen("Exiting Deckadence"))
+        ImGui::OpenPopup("Exiting Deckadence");
     ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowSize(ImVec2(360, 240));
     static int ddd_counter = 10;
@@ -17,34 +18,36 @@ void gui_show_waiting_tasks() {
             dotdotdot += ".";
     }
     if (ImGui::BeginPopupModal("Exiting Deckadence", nullptr, modalflags)) {
-        if (!dxstore.get_client_map().empty() && dxstore.get_mode() == Deckadence::mode_t::SERVER) {
+        if (!dxstore.get_client_map().empty() && dxstore.get_mode() == Deckadence::mode_t::Server) {
             if (dxstore.get_client_map().size() == 1)
                 ImGui::Text("Waiting to disconnect 1 client%s", dotdotdot.c_str());
             else
                 ImGui::Text("Waiting to disconnect %llu clients", dxstore.get_client_map().size());
         }
         const static tasks& running_tasks = dxstore.get_tasks();
-        if ((running_tasks & tasks::SERVER) != tasks::NONE && dxstore.get_mode() == Deckadence::mode_t::SERVER)
+        if ((running_tasks & tasks::Server) != tasks::None && dxstore.get_mode() == Deckadence::mode_t::Server)
             ImGui::Text("Waiting for server%s", dotdotdot.c_str());
-        if ((running_tasks & tasks::CLIENT) != tasks::NONE && dxstore.get_mode() == Deckadence::mode_t::CLIENT)
+        if ((running_tasks & tasks::Client) != tasks::None && dxstore.get_mode() == Deckadence::mode_t::Client)
             ImGui::Text("Waiting for client%s", dotdotdot.c_str());
-        if ((running_tasks & tasks::DISCOVERY) != tasks::NONE)
+        if ((running_tasks & tasks::Discovery) != tasks::None)
             ImGui::Text("Waiting for discovery service%s", dotdotdot.c_str());
-        if ((running_tasks & tasks::SIS) != tasks::NONE && dxstore.get_status() != status_t::RESTART)
+        if ((running_tasks & tasks::SingleInstance) != tasks::None && dxstore.get_status() != status_t::Restart)
             ImGui::Text("Waiting for SIS service%s", dotdotdot.c_str());
         ImGui::EndPopup();
     }
     --ddd_counter;
-    if (dxstore.get_client_map().empty() || dxstore.get_mode() == Deckadence::mode_t::CLIENT) {
-        if (dxstore.get_tasks() == tasks::NONE && dxstore.get_status() == status_t::EXITING) {
+    if (dxstore.get_client_map().empty() || dxstore.get_mode() == Deckadence::mode_t::Client) {
+        if (dxstore.get_tasks() == tasks::None && dxstore.get_status() == status_t::Exiting) {
             ddd_counter = 10;
             dotdotdot = "";
-            dxstore.set_status(status_t::DONE);
-        } else if (dxstore.get_status() == status_t::RESTART &&
-                   (dxstore.get_tasks() == tasks::SIS || (!dxstore.has_sis() && dxstore.get_tasks() == tasks::NONE))) {
+            dxstore.set_status(status_t::Done);
+            ImGui::CloseCurrentPopup();
+        } else if (dxstore.get_status() == status_t::Restart &&
+                   (dxstore.get_tasks() == tasks::SingleInstance || (!dxstore.IsSingleInstanceEnforced() && dxstore.get_tasks() == tasks::None))) {
             ddd_counter = 10;
             dotdotdot = "";
-            dxstore.set_status(status_t::RESTARTING);
+            dxstore.set_status(status_t::Restarting);
+            ImGui::CloseCurrentPopup();
         }
     }
 }
@@ -52,15 +55,16 @@ void gui_show_waiting_tasks() {
 void gui_close_dialog() {
     static Deckastore& dxstore = Deckastore::get();
     static DxWindow& dxwindow = dxstore.window;
-    if (dxstore.get_status() != status_t::RUNNING) {
+    if (dxstore.get_status() != status_t::Running) {
         glfwSetWindowShouldClose(dxwindow.get(), GLFW_FALSE);
         return;
     }
-    ImGui::OpenPopup("Close Deckadence");
+    if (!ImGui::IsPopupOpen("Close Deckadence"))
+        ImGui::OpenPopup("Close Deckadence");
     ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowSize(ImVec2(240, 180));
     if (ImGui::BeginPopupModal("Close Deckadence", nullptr, modalflags)) {
-        if (dxstore.get_mode() == Deckadence::mode_t::SERVER) {
+        if (dxstore.get_mode() == Deckadence::mode_t::Server) {
             static int close_type = 0;
             ImGui::RadioButton("Hide Deckadence", &close_type, 0);
             ImGui::RadioButton("Exit Deckadence", &close_type, 1);
@@ -70,22 +74,25 @@ void gui_close_dialog() {
             ImGui::SetCursorPos(ImVec2(100, 146));
             if (ImGui::Button("Cancel", ImVec2(64, 26))) {
                 glfwSetWindowShouldClose(dxwindow.get(), GLFW_FALSE);
+                ImGui::CloseCurrentPopup();
             }
             ImGui::SameLine();
             if (ImGui::Button("Confirm")) {
                 if (!close_type) {
                     dxstore.window.hide();
                 } else if (close_type == 1) {
-                    dxstore.set_status(status_t::EXITING);
+                    dxstore.set_status(status_t::Exiting);
                 } else if (close_type == 2) {
-                    dxstore.set_status(status_t::RESTART);
+                    dxstore.set_status(status_t::Restart);
                     close_type = 0;
                 }
                 glfwSetWindowShouldClose(dxwindow.get(), GLFW_FALSE);
+                ImGui::CloseCurrentPopup();
             }
         } else {
-            dxstore.set_status(status_t::EXITING);
+            dxstore.set_status(status_t::Exiting);
             glfwSetWindowShouldClose(dxwindow.get(), GLFW_FALSE);
+            ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();
     }

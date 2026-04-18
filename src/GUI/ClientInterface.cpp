@@ -1,19 +1,22 @@
-#include "../../include/Config/Deckastore.hpp"
-#include "../../include/Client/Client.hpp"
-#include "../../include/GUI/GUI.hpp"
-#include "../../include/Config/Config.hpp"
-#include "../../include/Client/DiscoveryListenerService.hpp"
+#include "Config/Deckastore.hpp"
+#include "Client/Client.hpp"
+#include "GUI/GUI.hpp"
+#include "Config/Config.hpp"
+#include "Client/DiscoveryListenerService.hpp"
+#include "Server/Message.hpp"
 
-void request_execution(int item) {
-    string command = string(1, DX_EXECUTE_BYTE) + std::to_string(item);
-    send(Deckastore::get().retrieve_current_client().socket, command.c_str(), command.length()+1, 0);
+void request_execution(const uint8_t idx) {
+    uint64_t header = construct_header(1, static_cast<uint32_t>(MessageType::Execute));
+    string msg;
+    msg.append(reinterpret_cast<const char*>(&header), sizeof(uint64_t));
+    msg.append(reinterpret_cast<const char*>(&idx), 1);
+    send(Deckastore::get().retrieve_current_client().socket, msg.c_str(), msg.length(), 0);
 }
 
 void draw_main_window() {
     Deckastore& dxstore = Deckastore::get();
     dxstore.retrieve_current_client().lock.lock(); // Why? Why not main lock?
     Profile& dxprofile = dxstore.retrieve_current_client().get_current_profile_ref();
-    int size = dxprofile.rows*dxprofile.columns;
     ImGuiIO& io = ImGui::GetIO();
     ImGuiWindowFlags iwf = ImGuiWindowFlags_NoCollapse |
                            ImGuiWindowFlags_NoDecoration |
@@ -27,24 +30,31 @@ void draw_main_window() {
     ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0.0f, 0.0f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyle().Colors[ImGuiCol_Button]);
     ImGui::Begin("##main", nullptr, iwf);
-    for (int i = 0; i < size; ++i) {
-        bool disabled = dxprofile.root->items[i]->prop_apply_disable();
-        if (disabled) {
+    ImVec2 button_size = ImVec2(std::floor(io.DisplaySize.x / (float)dxprofile.columns),
+                                std::floor(io.DisplaySize.y / (float)dxprofile.rows));
+    for (uint8_t i = 0; i < dxprofile.rows*dxprofile.columns; ++i) {
+        bool disabled = dxprofile.root->items[i]->disabled();
+        if (disabled)
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-        }
         ImGui::BeginDisabled(disabled);
         ImGui::PushID(i);
-        if (ImGui::Button(dxprofile.root->items[i]->label.c_str(),
-                          ImVec2(io.DisplaySize.x / dxprofile.columns, io.DisplaySize.y / dxprofile.rows))) {
+            bool pressed = false;
+            shared_ptr item = dxprofile.root->items[i];
+            if (item->has_thumbnail && item->thumbnail->ready_to_bind())
+                item->thumbnail->bind_to_context();
+            if (item->has_thumbnail && item->thumbnail->is_init()) {
+                pressed = ImGui::Button("##button", button_size);
+                gui_overlay_texture(button_size, item->thumbnail);
+            } else {
+                pressed = ImGui::Button(item->label.c_str(), button_size);
+            }
+        if (pressed) {
             request_execution(i);
-            if (!strcmp(dxprofile.root->items[i]->get_typename(), "Folder")) {
-                dxprofile.root->items[i]->execute();
-                dxprofile.parent.nav_history.push_back(std::to_string(i));
-            } else if (!strcmp(dxprofile.root->items[i]->get_typename(), "Go up")) {
-                dxprofile.root->items[i]->execute();
-                dxprofile.parent.nav_history.pop_back();
+            if (item->openable_in_editor()) {
+                item->execute();
             }
         }
+
         ImGui::PopID();
         if ((i+1) % dxprofile.columns)
             ImGui::SameLine();
@@ -63,31 +73,34 @@ void draw_connect_dialog() {
     static bool manual_connect = false;
     static char ip_buffer[16]{};
     static int  port = 32018;
-    ImGui::OpenPopup("Connect to Server");
+    if (!ImGui::IsPopupOpen("Connect to Server"))
+        ImGui::OpenPopup("Connect to Server");
     ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowSize(ImVec2(420, 360));
     // TODO: Auto connect
     if (ImGui::BeginPopupModal("Connect to Server", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse)) {
         if (manual_connect) {
-            ImGui::Text("IP address: "); // TODO: Add hostname support
+            // TODO: Add hostname support
+            ImGui::Text("IP address: ");
             ImGui::SameLine();
             ImGui::InputText("##ip", ip_buffer, 16);
             ImGui::Text("Port");
             ImGui::SameLine();
-            ImGui::InputInt("##port", &port);
-            if (port > 65535 || port < 0)
-                port = 32018;
+            // TODO: Make a global collection of these
+            static constexpr unsigned short step = 1;
+            static constexpr unsigned short step_fast = 100;
+            ImGui::InputScalar("##port", ImGuiDataType_U16, &port, &step, &step_fast);
         } else {
             if (selected_server >= servers.size()) {
                 selected_server = -1;
             }
             if (servers.empty()) {
                 ImVec2 size = ImGui::CalcTextSize("No Deckadence servers found on your local network.");
-                ImGui::SetCursorPosX((ImGui::GetWindowSize().x-size.x)*0.5f);
+                ImGui::SetCursorPosX((ImGui::GetWindowWidth()-size.x)*0.5f);
                 ImGui::TextDisabled("No Deckadence servers found on your local network.");
             } else {
                 ImVec2 size = ImGui::CalcTextSize("Deckadence servers on your local network:");
-                ImGui::SetCursorPosX((ImGui::GetWindowSize().x-size.x)*0.5f);
+                ImGui::SetCursorPosX((ImGui::GetWindowWidth()-size.x)*0.5f);
                 ImGui::TextDisabled("Deckadence servers on your local network:");
                 for (int i = 0; i < servers.size(); ++i) {
                     const bool selected = selected_server == i;
@@ -104,10 +117,12 @@ void draw_connect_dialog() {
         ImGui::SameLine();
         ImGui::SetCursorPosX(216);
         if (ImGui::Button("Settings", ImVec2(64, 26))) {
+            ImGui::CloseCurrentPopup();
             Deckastore::get().draw_settings = true;
         }
         ImGui::SameLine();
         if (ImGui::Button("Exit", ImVec2(64, 26))) {
+            ImGui::CloseCurrentPopup();
             glfwSetWindowShouldClose(Deckastore::get().window.get(), GLFW_TRUE);
         }
         ImGui::SameLine();
@@ -141,6 +156,7 @@ void draw_connect_dialog() {
                             ip_buffer[strlen(ipv4tmp)] = '\0';
                         }
                         selected_server = -1;
+                        ImGui::CloseCurrentPopup();
                     } else {
                         nx_sock_close(sock);
                     }
@@ -164,10 +180,10 @@ int client_gui_init() {
 #else
     if (dxstore.create_window("Deckadence", {1280, 720}, 1)) {
 #endif
-        dxstore.set_status(status_t::DONE);
+        dxstore.set_status(status_t::Done);
         return -1;
     }
-const DxWindow& dxwindow = dxstore.window;
+    const DxWindow& dxwindow = dxstore.window;
 
     gui_init_context();
 
@@ -175,16 +191,11 @@ const DxWindow& dxwindow = dxstore.window;
     //constexpr ImWchar ranges[] = {0x0001, 0xFFFF, 0};
     //ImFont* header = io.Fonts->AddFontFromMemoryCompressedTTF(OpenSans_compressed_data, OpenSans_compressed_size, 32, nullptr, ranges);
     //io.Fonts->Build();
-    while (dxstatus != status_t::DONE && dxstatus != status_t::RESTARTING) {
+    while (dxstatus != status_t::Done && dxstatus != status_t::Restarting) {
         glfwWaitEventsTimeout(max_wait_time);
         if (glfwGetWindowAttrib(dxwindow.get(), GLFW_ICONIFIED)) {
             ImGui_ImplGlfw_Sleep(10);
             continue;
-        }
-
-        if (window_resized) {
-            // accomodate_window_size(dxwindow.get());
-            window_resized = false;
         }
 
         ImGui_ImplOpenGL3_NewFrame();
@@ -193,7 +204,7 @@ const DxWindow& dxwindow = dxstore.window;
 
         // TODO: Font
         //ImGui::PushFont(header);
-        if (dxstatus == status_t::EXITING || dxstatus == status_t::RESTART) {
+        if (dxstatus == status_t::Exiting || dxstatus == status_t::Restart) {
             gui_show_waiting_tasks();
         } else if (self.socket == NX_INVALID_SOCKET) {
             if (glfwGetInputMode(dxstore.window.get(), GLFW_CURSOR) != GLFW_CURSOR_NORMAL)
@@ -207,7 +218,7 @@ const DxWindow& dxwindow = dxstore.window;
                 glfwSetInputMode(dxstore.window.get(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
         }
         if (dxwindow.should_close()) {
-            dxstore.set_status(status_t::EXITING);
+            dxstore.set_status(status_t::Exiting);
             glfwSetWindowShouldClose(dxwindow.get(), GLFW_FALSE);
         }
         draw_main_window();

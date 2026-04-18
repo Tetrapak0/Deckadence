@@ -9,20 +9,19 @@ project "Deckadence"
     language "C++"
 
     files {"src/**.cpp", "include/**.hpp", "external/NativeFileDialogs-Extended/nfd_win.cpp", "external/ImGui/*", "external/Tetrapak0/*", "external/stb/*"}
+    includedirs {"include/"}
     filter {"system:windows"}
-        flags {"MultiProcessorCompile", "NoImportLib"}
-        files {"Deckadence.rc", "**.ico"}
-        vpaths {["*"] = {"*.rc", "**.ico"}}
+        flags {"multiprocessorcompile"}
+        files {"resources/Deckadence.rc", "resources/**.ico", "resources/**.c"}
+        vpaths {["resources"] = {"resources/**.rc", "resources/**.ico"}}
     filter {}
+    cppdialect "c++20"
+    cdialect "c17"
     if (_ACTION or ""):find("vs") then
-        cppdialect "c++17"
-        cdialect "c17"
         links {"opengl32", "ws2_32", "iphlpapi", "dwmapi"}
         libdirs {"external/**/lib"}
         links {"freetype", "glfw3"}
     else
-        cppdialect "gnu++17"
-        cdialect "gnu17"
         links {"glfw", "GL", "freetype"}
         libdirs {os.findlib("dbus-1")}
         links {"dbus-1"}

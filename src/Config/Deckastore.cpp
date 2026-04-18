@@ -1,12 +1,13 @@
-#include "../../include/Config/Deckastore.hpp"
-#include "../../include/Config/Config.hpp"
-#include "../../include/GUI/DxWindow.hpp"
-#include "../../include/Server/DiscoveryService.hpp"
+#include "Config/Deckastore.hpp"
+#include "Config/Config.hpp"
+#include "GUI/DxWindow.hpp"
+#include "Server/DiscoveryService.hpp"
+#include "Server/Message.hpp"
 
 void Deckastore::reset() {
     Deckastore& self = get();
-    self.status = status_t::RUNNING;
-    self.mode = Deckadence::mode_t::SERVER;
+    self.status = status_t::Running;
+    self.mode = Deckadence::mode_t::Server;
     self.discoverable = true;
     self.port = 32018;
     self.draw_properties = false;
@@ -40,8 +41,7 @@ void Deckastore::disable_sis() {
     singleinstance = false;
 }
 
-
-bool Deckastore::has_sis() const {
+bool Deckastore::IsSingleInstanceEnforced() const {
     return singleinstance;
 }
 
@@ -86,6 +86,20 @@ Client& Deckastore::retrieve_current_client() {
     return retrieve_client(selected_client_id);
 }
 
+Texture* Deckastore::create_texture(string name, fs::path path) {
+    auto [it, inserted] = this->textureStore.try_emplace(name, std::make_unique<Texture>(path));
+    
+    if (inserted)
+        return it->second.get();
+}
+
+Texture* Deckastore::create_texture(string name, const uint8_t* data, int size) {
+    auto [it, inserted] = this->textureStore.try_emplace(name, std::make_unique<Texture>(data, size));
+
+    if (inserted)
+        return it->second.get();
+}
+
 json& Deckastore::get_config() {
     return this->config;
 }
@@ -110,7 +124,7 @@ void Deckastore::insert_client(uint64_t uuid, socket_t socket) {
     //                 std::forward_as_tuple(uuid),
     //                 std::forward_as_tuple(uuid, socket));
     clients.try_emplace(uuid, uuid, socket);
-    if (!selected_client_id)
+    if (selected_client_id == DX_INVALID_UUID)
         selected_client_id = uuid;
     lock.unlock();
 }
@@ -126,10 +140,10 @@ void Deckastore::disconnect_client(const uint64_t uuid, const string& reason) {
         // TODO: Add offline config editor; when client not connected
         draw_item_properties = -1;
         draw_properties = false;
-        selected_client_id = 0;
+        selected_client_id = DX_INVALID_UUID;
     }
     // this is allowed to fail, and it always will if the client disconnects itself
-    send(c.socket, string(string(1, DX_DISCONNECT_BYTE) + reason).c_str(), reason.length()+1, 0);
+    send(c.socket, string(string(1, (char)MessageType::Disconnect) + reason).c_str(), reason.length()+1, 0);
     if (c.socket != NX_INVALID_SOCKET) {
         nx_sock_close(c.socket);
         c.socket = NX_INVALID_SOCKET;

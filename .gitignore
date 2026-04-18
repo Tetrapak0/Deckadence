@@ -29,10 +29,12 @@ obj/
 # Misc.
 .idea/
 **/cmake-build-debug/
-**/cmake-build-relwithdebinfo/
-**/cmake-build-minsizerel/
+**/cmake-build-debug-msvc/
+**/cmake-build-release-msvc/
 **/cmake-build-release/
 **/build/
 **/.cache/
 **/CMake/
 **/bin/
+.cache/
+__cmake_systeminformation/

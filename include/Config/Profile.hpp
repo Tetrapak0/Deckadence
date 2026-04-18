@@ -5,7 +5,7 @@
 
 #include "../../external/jsonhpp/json.hpp"
 
-#include "Item.hpp"
+#include "FolderItem.hpp"
 
 using std::vector;
 using std::string;
@@ -17,20 +17,28 @@ class Client;
 class Profile {
     friend class Client;
 public:
-    string name;
-    int rows = 4;
-    int columns = 6;
-
     json* config = nullptr;
     Client& parent;
 
-    FolderItem items;
-    FolderItem* root = &items;
-
-
-    explicit Profile(Client& parent, json* config = nullptr);
+    string name;
+    uint8_t rows = 4;
+    uint8_t columns = 6;
 private:
     string m_name = name;
     int m_rows = rows;
     int m_columns = columns;
+
+    vector<uint64_t> m_used_uuids;
+
+    string  compute_name()    const;
+    uint8_t compute_rows()    const;
+    uint8_t compute_columns() const;
+public:
+    FolderItem* root = nullptr;
+    FolderItem  items;
+
+    int  register_uuid(uint64_t uuid);
+    void unregister_uuid(uint64_t uuid);
+
+    explicit Profile(Client& parent, json* config = nullptr);
 };

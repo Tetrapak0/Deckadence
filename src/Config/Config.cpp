@@ -1,5 +1,5 @@
-#include "../../include/Config/Deckastore.hpp"
-#include "../../include/Config/Config.hpp"
+#include "Config/Deckastore.hpp"
+#include "Config/Config.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -17,8 +17,10 @@ fs::path get_cfg_dir() {
 }
 
 uint64_t generate_uuid() {
+    // This is fine for clients, but for items it is much more likely to collide
+    //  at one point or another
     std::random_device rand_dev;
-    std::mt19937 generator(rand_dev());
+    std::mt19937_64 generator(rand_dev());
     std::uniform_int_distribution<uint64_t> distributor(1, UINT64_MAX);
 
     return distributor(generator);
@@ -38,7 +40,7 @@ int check_config() {
     reader.close();
 
     if (config.contains("mode") && config.contains("server") && config["server"].is_object()) {
-        if (config["mode"].is_number_integer() && (config["mode"] == 1 ||
+        if (config["mode"].is_number_unsigned() && (config["mode"] == 1 ||
                                                    !static_cast<int>(config["mode"]))) {
             dxstore.set_mode(config["mode"]);
         } else {

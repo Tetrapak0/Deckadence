@@ -17,7 +17,7 @@ socket_t create_socket(NetworkInterface iface) {
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(Deckastore::get().get_port());
-    addr.sin_addr.s_addr = inet_addr(iface.addr.to_string().c_str());
+    addr.sin_addr.s_addr = inet_addr(iface.ipv4.to_string().c_str());
 
     res = bind(listen_socket, (sockaddr*)&addr, sizeof(addr));
     if (res == NX_SOCKET_ERROR) {

@@ -1,41 +1,38 @@
 #pragma once
 
-#define DX_CONFIG_BYTE 0x43
-#define DX_DISCONNECT_BYTE 0x44
-#define DX_EXECUTE_BYTE 69
-#define DX_WAKEUP_BYTE 0x57
-
 #include "../../external/Tetrapak0/NexusSockets.h"
 
 #include "ItemTypeRegistry.hpp"
-#include "../Client/Client.hpp"
-#include "../GUI/GUI.hpp"
-#include "../GUI/DxWindow.hpp"
-#include "../Server/DiscoveryService.hpp"
+#include "Client/Client.hpp"
+#include "GUI/GUI.hpp"
+#include "GUI/DxWindow.hpp"
+#include "Server/DiscoveryService.hpp"
 
 #include <unordered_map>
 
 using std::unordered_map;
 
 enum class status_t {
-    RUNNING     = 0,
-    DONE        = 1,
-    EXITING     = 2,
-    RESTART     = 4,
-    RESTARTING  = 8,
+    Running     = 0,
+    Done        = 1,
+    Exiting     = 2,
+    Restart     = 4,
+    Restarting  = 8,
 };
 namespace Deckadence {
 enum class mode_t {
-    SERVER      = 0,
-    CLIENT      = 1
+    Server      = 0,
+    Client      = 1,
+    Undefined   = 0xFFFF
 };
 }
 enum class tasks : uint64_t {
-    NONE        = 0,
-    SIS         = 1,
-    SERVER      = 2,
-    CLIENT      = 2,
-    DISCOVERY   = 4,
+    None            = 0,
+    SingleInstance  = 1,
+    Server          = 2,
+    Client          = 2,
+    Discovery       = 4,
+    Setup           = 8
 };
 inline tasks operator|(tasks lhs, tasks rhs) {
     return static_cast<tasks>(static_cast<uint64_t>(lhs) | static_cast<uint64_t>(rhs));
@@ -56,24 +53,24 @@ inline tasks operator~(tasks rhs) {
 }
 
 class Deckastore {
-    friend int main(int argc, char** argv);
-    friend int check_config();
-    friend int draw_pages();
+    friend int  main(int argc, char** argv);
+    friend int  check_config();
+    friend void draw_pages();
 
-    tasks running_tasks = tasks::NONE;
-    status_t status = status_t::RUNNING;
+    tasks running_tasks = tasks::None;
+    status_t status = status_t::Running;
 
-    Deckadence::mode_t mode = Deckadence::mode_t::SERVER;
+    Deckadence::mode_t mode = Deckadence::mode_t::Server;
     bool discoverable = true;
     bool singleinstance = true;
     uint16_t port = 32018;
 
-    uint64_t selected_client_id = 0;
+    uint64_t selected_client_id = DX_INVALID_UUID;
     unordered_map<uint64_t, Client> clients;
+    unordered_map<string, unique_ptr<Texture>> textureStore;
     vector<NetworkInterface> interfaces;
 
     json config;
-
 
     static void reset();
 
@@ -90,12 +87,14 @@ public:
     DxWindow window;
     mutex lock;
     ItemTypeRegistry& type_registry = ItemTypeRegistry::get();
+    ImFont* header  = nullptr;
+    ImFont* regular = nullptr;
 
     int  draw_item_properties = -1;
     bool draw_properties      = false;
     bool draw_settings        = false;
 
-    [[nodiscard]] bool has_sis() const;
+    [[nodiscard]] bool IsSingleInstanceEnforced() const;
 
     int create_window(const char* title, const Vec2<int>& size = {800, 600}, int fullscreen = 0,
                       const std::vector<std::pair<int, int>>& hints = {},
@@ -112,6 +111,9 @@ public:
 
     Client& retrieve_client(uint64_t uuid);
     Client& retrieve_current_client();
+
+    Texture* create_texture(string name, fs::path path);
+    Texture* create_texture(string name, const uint8_t* data, int size);
 
     json& get_config();
 

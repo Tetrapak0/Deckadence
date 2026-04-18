@@ -1,23 +1,14 @@
 cmake_minimum_required(VERSION 3.15)
 project(Deckadence)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 include_directories(include)
-include_directories(include/Client)
-include_directories(include/Config)
-include_directories(include/GUI)
-include_directories(include/Server)
-include_directories(include/Utilities)
 
-file(GLOB DxSrc ${CMAKE_CURRENT_LIST_DIR}/src/Client/*.cpp
-                ${CMAKE_CURRENT_LIST_DIR}/src/Config/*.cpp
-                ${CMAKE_CURRENT_LIST_DIR}/src/GUI/*.cpp
-                ${CMAKE_CURRENT_LIST_DIR}/src/Server/*.cpp
-                ${CMAKE_CURRENT_LIST_DIR}/src/Utilities/*.cpp
-                ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp)
+file(GLOB_RECURSE DxSrc ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp)
 file(GLOB ImSrc ${CMAKE_CURRENT_LIST_DIR}/external/imgui/*.cpp)
+file(GLOB TetraSrc ${CMAKE_CURRENT_LIST_DIR}/external/Tetrapak0/*.c ${CMAKE_CURRENT_LIST_DIR}/external/Tetrapak0/*.cpp)
 
 if (WIN32)
     file(GLOB NFDExSrc ${CMAKE_CURRENT_LIST_DIR}/external/NativeFileDialogs-Extended/nfd_win.cpp)
@@ -29,8 +20,15 @@ file(GLOB_RECURSE NoWarnCpp ${CMAKE_CURRENT_LIST_DIR}/external/*.cpp)
 
 set_source_files_properties(${NoWarnCpp} PROPERTIES COMPILE_FLAGS "-w")
 
-add_executable(Deckadence ${DxSrc} ${ImSrc} ${NFDExSrc} ${CMAKE_CURRENT_LIST_DIR}/external/stb/stbi.c)
-set_property(TARGET Deckadence PROPERTY CXX_STANDARD 17)
+add_executable(Deckadence ${DxSrc}
+                          ${ImSrc}
+                          ${NFDExSrc}
+                          ${TetraSrc}
+                          ${CMAKE_CURRENT_LIST_DIR}/external/stb/stbi.c
+                          ${CMAKE_CURRENT_LIST_DIR}/resources/icon.c
+                          ${CMAKE_CURRENT_LIST_DIR}/resources/EnterIcon.c
+                          ${CMAKE_CURRENT_LIST_DIR}/resources/Deckadence.rc)
+set_property(TARGET Deckadence PROPERTY CXX_STANDARD 23)
 
 # must be ran with -DCMAKE_BUILD_TYPE=Debug
 if (${CMAKE_BUILD_TYPE} MATCHES Debug)
@@ -38,9 +36,23 @@ if (${CMAKE_BUILD_TYPE} MATCHES Debug)
 endif()
 
 if (WIN32)
-#    target_compile_options(Deckadence PRIVATE -Wl,--subsystem,windows)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--subsystem,windows")
-    target_link_libraries(Deckadence glfw3 opengl32 freetype dwmapi ws2_32 iphlpapi)
+    if (MSVC)
+#        file(GLOB_RECURSE ICO_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.ico")
+#        target_sources(Deckadence PRIVATE ${ICO_FILES})
+        if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+            add_compile_options(/fsanitize=address)
+            add_link_options(/fsanitize=address)
+        endif()
+        target_link_options(Deckadence PRIVATE "/SUBSYSTEM:WINDOWS")
+        target_compile_options(Deckadence PRIVATE /MP)
+        target_link_libraries(Deckadence ${CMAKE_CURRENT_LIST_DIR}/external/GLFW/lib/glfw3.lib
+                                         ${CMAKE_CURRENT_LIST_DIR}/external/FreeType/lib/freetype.lib
+                                         opengl32 dwmapi ws2_32 iphlpapi)
+    else()
+        target_compile_options(Deckadence PRIVATE -mwindows -Wl,--subsystem,windows)
+#        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--subsystem,windows")
+        target_link_libraries(Deckadence glfw3 opengl32 freetype dwmapi ws2_32 iphlpapi)
+    endif()
 elseif (UNIX AND NOT APPLE)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(DBUS REQUIRED dbus-1)

@@ -1,15 +1,13 @@
 #include "../../include/Config/Deckastore.hpp"
 #include "../../include/Config/Config.hpp"
 #include "../../include/Config/Item.hpp"
+#include "../../include/Config/FilesystemAndURLItem.hpp"
+#include "../../include/Config/FolderItem.hpp"
 #include "../../include/GUI/GUI.hpp"
 #include "../../include/Utilities/FileDialog.hpp"
 
 FilesystemAndURLItem::FilesystemAndURLItem(json* config, Profile& parent_profile, FolderItem* parent) : Item(config, parent_profile, parent) {
     if (config) {
-        if (config->contains("label") && (*config)["label"].is_string()) {
-            this->label = (*config)["label"].get<string>();
-            this->m_label = label;
-        }
         if (config->contains("path") && (*config)["path"].is_string()) {
             this->path = (*config)["path"].get<string>();
             this->m_path = path;
@@ -18,6 +16,9 @@ FilesystemAndURLItem::FilesystemAndURLItem(json* config, Profile& parent_profile
 }
 
 void FilesystemAndURLItem::draw_properties() {
+    ImGui::BeginDisabled();
+    ImGui::TextWrapped("(i) Please do not use environment variables. Write your full user path (if applicable), not ~/");
+    ImGui::EndDisabled();
     ImGui::AlignTextToFramePadding();
     ImGui::Text("Path: ");
     ImGui::SameLine();
@@ -45,26 +46,15 @@ void FilesystemAndURLItem::draw_properties() {
 }
 
 void FilesystemAndURLItem::properties_cancel() {
-    this->m_label = label;
     this->m_path = path;
 }
 
 void FilesystemAndURLItem::properties_apply() {
-    this->label = this->m_label;
     this->path = this->m_path;
-    int idx = Deckastore::get().draw_item_properties;
-    if (!config)
-        config = &this->parent_profile.root->request_config(idx);
-    else
-        this->config->clear();
-    (*this->config)["idx"] = idx;
-    (*this->config)["label"] = this->label;
-    (*this->config)["type"] = this->get_typename();
     (*this->config)["path"] = this->path;
-    this->parent_profile.parent.update_config();
 }
 
-bool FilesystemAndURLItem::prop_apply_disable() {
+bool FilesystemAndURLItem::disabled() {
     return this->m_path.empty();
 }
 

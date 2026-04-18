@@ -1,6 +1,6 @@
-#include "../../include/Server/DiscoveryService.hpp"
-#include "../../include/Client/DiscoveryListenerService.hpp"
-#include "../../include/Config/Deckastore.hpp"
+#include "Server/DiscoveryService.hpp"
+#include "Client/DiscoveryListenerService.hpp"
+#include "Config/Deckastore.hpp"
 
 mutex servers_lock;
 
@@ -25,7 +25,7 @@ void print_server(const ServerInfo& si) {
 
 void start_listening() {
     Deckastore& dxstore = Deckastore::get();
-    dxstore.add_task(tasks::DISCOVERY);
+    dxstore.add_task(tasks::Discovery);
     const status_t& dxstatus = dxstore.get_status();
     Client& dxclient = dxstore.retrieve_current_client();
 
@@ -53,7 +53,7 @@ void start_listening() {
         addr.sin_port = htons(MCAST_PORT);
         struct ip_mreq mreq{};
         mreq.imr_multiaddr.s_addr = inet_addr(MCAST_IP);
-        mreq.imr_interface.s_addr = inet_addr(iface.addr.to_string().c_str());
+        mreq.imr_interface.s_addr = inet_addr(iface.ipv4.to_string().c_str());
 
         bind(iface.discovery_sock, (sockaddr*)&addr, sizeof(addr));
         // int loop = 0;
@@ -66,7 +66,7 @@ void start_listening() {
         pollees[i].events = POLLIN;
         pollees[i].fd = interfaces[i].discovery_sock;
     }
-    while (dxclient.socket == NX_INVALID_SOCKET && dxstatus == status_t::RUNNING) {
+    while (dxclient.socket == NX_INVALID_SOCKET && dxstatus == status_t::Running) {
         int pres = poll(pollees.data(), interfaces.size(), 2000);
         auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
         if (!pres) {
@@ -121,5 +121,5 @@ void start_listening() {
     servers_lock.lock();
     servers.clear();
     servers_lock.unlock();
-    dxstore.remove_task(tasks::DISCOVERY);
+    dxstore.remove_task(tasks::Discovery);
 }

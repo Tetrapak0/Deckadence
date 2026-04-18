@@ -50,11 +50,11 @@ struct IPv4 {
 
 struct NetworkInterface {
     string name;
-    IPv4 addr{};
+    IPv4 ipv4{};
     socket_t discovery_sock = NX_INVALID_SOCKET;
     socket_t listen_socket = NX_INVALID_SOCKET;
-    NetworkInterface(string name, const char* addr) : name(std::move(name)), addr(addr) {}
-    NetworkInterface(string name, const IPv4& addr) : name(std::move(name)), addr(addr) {}
+    NetworkInterface(string name, const char* addr) : name(std::move(name)), ipv4(addr) {}
+    NetworkInterface(string name, const IPv4& addr) : name(std::move(name)), ipv4(addr) {}
     NetworkInterface() = default;
 };
 

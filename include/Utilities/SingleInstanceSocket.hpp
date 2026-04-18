@@ -4,4 +4,4 @@
 
 #include "../../include/GUI/GUI.hpp"
 
-extern int si_socket_init();
+int si_socket_init();

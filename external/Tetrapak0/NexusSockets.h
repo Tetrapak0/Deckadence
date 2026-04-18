@@ -37,7 +37,7 @@ typedef int    socklen_t;
 #define NX_INVALID_SOCKET INVALID_SOCKET
 
 inline int nx_sock_init() {
-    WSAData wsadata{};
+    struct WSAData wsadata = {0};
     return WSAStartup(MAKEWORD(2, 2), &wsadata);
 }
 #define poll(fdarray, fds, timeout) WSAPoll(fdarray, fds, timeout);
@@ -63,5 +63,15 @@ typedef int socket_t;
 #define NXS_SHUT_R  SHUT_RD
 #define NXS_SHUT_W  SHUT_WR
 #define NXS_SHUT_RW SHUT_RDWR
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+unsigned long long recvn(int socket, void* out, unsigned long long len, int flags);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -6,6 +6,7 @@
 #include <vector>
 
 using std::mutex;
+using std::string;
 using std::vector;
 
 struct ServerInfo {
@@ -34,7 +35,7 @@ struct ServerInfo {
 };
 */
 
-extern void start_listening();
+void start_listening();
 
 extern mutex servers_lock;
 extern vector<ServerInfo> servers;

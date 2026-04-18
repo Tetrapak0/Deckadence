@@ -17,7 +17,6 @@
 #include <vector>
 
 #include "Deckastore.hpp"
-#include "../GUI/GUI.hpp"
 
 #include "../../external/jsonhpp/json.hpp"
 
@@ -28,7 +27,7 @@ using std::string;
 using std::unordered_map;
 using std::vector;
 
-extern fs::path get_cfg_dir();
-extern uint64_t generate_uuid();
-extern int      check_config();
-extern int      run_oobe();
+uint64_t generate_uuid();
+fs::path get_cfg_dir();
+int      check_config();
+int      run_oobe();

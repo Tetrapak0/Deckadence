@@ -12,7 +12,6 @@ using std::vector;
 
 class DxWindow {
     GLFWwindow* window = nullptr;
-    string title;
     int fullscreen = 0;
     Vec2<int> size;
     Vec2<int> min_size;
@@ -25,6 +24,7 @@ public:
 
     void register_close_callback(GLFWwindowclosefun callback) const;
     void register_resize_callback(GLFWwindowsizefun callback) const;
+    void register_move_callback(GLFWwindowposfun callback) const;
 
     void resize(const Vec2<int>& size) const;
     const Vec2<int>& get_size();
