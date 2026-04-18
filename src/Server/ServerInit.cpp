@@ -32,7 +32,11 @@ int begin_comm_loop(uint64_t uuid) {
 
         client.res = recvn(client.socket, reinterpret_cast<char*>(&header), sizeof(uint64_t), NULL);
         if (client.res <= 0) {
+#ifdef _WIN32
             printf("%d\n", WSAGetLastError());
+#else
+            printf("%s\n", strerror(errno));
+#endif
             break;
         }
 
@@ -50,7 +54,11 @@ int begin_comm_loop(uint64_t uuid) {
 
         client.res = recvn(client.socket, buf.data(), len, NULL);
         if (client.res <= 0) {
+#ifdef _WIN32
             printf("%d\n", WSAGetLastError());
+#else
+            printf("%s\n", strerror(errno));
+#endif
             break;
         }
 

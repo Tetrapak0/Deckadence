@@ -26,6 +26,12 @@ enum class mode_t {
     Undefined   = 0xFFFF
 };
 }
+
+#ifdef __linux__
+#pragma push_macro("None")
+#undef None
+#endif
+
 enum class tasks : uint64_t {
     None            = 0,
     SingleInstance  = 1,
@@ -34,6 +40,11 @@ enum class tasks : uint64_t {
     Discovery       = 4,
     Setup           = 8
 };
+
+#ifdef __linux__
+#pragma pop_macro("None")
+#endif
+
 inline tasks operator|(tasks lhs, tasks rhs) {
     return static_cast<tasks>(static_cast<uint64_t>(lhs) | static_cast<uint64_t>(rhs));
 }

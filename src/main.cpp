@@ -118,12 +118,13 @@ int main(int argc, char** argv) {
         Deckastore::get().disable_sis();
         dxstore.set_status(status_t::Running);
     }
-#endif
-    std::thread t_si_ensurer(si_socket_init);
 
     if (mode == Deckadence::mode_t::Undefined)
         dxstore.set_status(status_t::Done);
+#endif
+    std::thread t_si_ensurer(si_socket_init);
 
+    // wait for the single instance socket
     while (dxstore.get_status() == status_t::Restart) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }

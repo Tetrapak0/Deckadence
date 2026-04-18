@@ -1,8 +1,7 @@
 #include "NexusSockets.h"
+#include "stdint.h"
 
-typedef unsigned long long uint64_t;
-
-uint64_t recvn(int socket, void* out, uint64_t len, int flags) {
+unsigned long long recvn(int socket, void* out, unsigned long long len, int flags) {
     uint64_t received = 0;
     while (received < len) {
         uint64_t res = recv(socket, (char*)out+received, len-received, flags);

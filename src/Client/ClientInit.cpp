@@ -29,7 +29,11 @@ void begin_receiver_loop() {
         uint64_t header = 0;
         dxclient.res = recvn(dxclient.socket, &header, sizeof(uint64_t), 0);
         if (dxclient.res <= 0) {
+#ifdef _WIN32
             printf("%d\n", WSAGetLastError());
+#else
+            printf("%s\n", strerror(errno));
+#endif
             break;
         }
 
@@ -47,7 +51,11 @@ void begin_receiver_loop() {
 
         dxclient.res = recvn(dxclient.socket, buf.data(), len, 0);
         if (dxclient.res <= 0) {
+#ifdef _WIN32
             printf("%d\n", WSAGetLastError());
+#else
+            printf("%s\n", strerror(errno));
+#endif
             break;
         }
 
