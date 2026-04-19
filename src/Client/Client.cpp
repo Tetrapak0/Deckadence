@@ -116,7 +116,7 @@ int Client::configure() {
     return 0;
 }
 
-inline uint64_t construct_header(uint32_t msg_len, uint32_t type) {
+uint64_t construct_header(uint32_t msg_len, uint32_t type) {
     return (uint64_t)htonl(msg_len) << 32 | htonl(type);
 }
 

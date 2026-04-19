@@ -92,6 +92,6 @@ public:
     // }
 };
 
-inline uint64_t construct_header(uint32_t msg_len, uint32_t type);
+uint64_t construct_header(uint32_t msg_len, uint32_t type);
 int start_client_sequence();
 int client_gui_init();
