@@ -1,4 +1,4 @@
-#include "../../include/GUI/GUI.hpp"
+#include "GUI/GUI.hpp"
 
 // TODO: Add custom style
 // TODO: Change selectable color

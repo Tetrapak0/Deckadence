@@ -40,14 +40,10 @@ int begin_comm_loop(uint64_t uuid) {
             break;
         }
 
-        printf("%llu\n", header);
-
         uint32_t len = ntohl(header >> 32);
         uint32_t type = ntohl(header & 0xFFFFFFFF);
 
-        printf("%llu\n", header);
-
-        printf("size: %lu, type: %lu\n", len, type);
+        printf("Message size: %lu, type: %lu\n", len, type);
 
         string buf(len, '\0');
 

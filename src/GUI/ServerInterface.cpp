@@ -86,12 +86,15 @@ void gui_draw_item_properties() {
     }
     ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowSize(ImVec2(640, 480));
-    // TODO: Live preview
     if (ImGui::BeginPopupModal("Button properties", nullptr, modalflags)) {
         ImGui::BeginChild("##container", ImVec2(ImGui::GetWindowWidth()-ImGui::GetStyle().WindowPadding.x*2, 480-ImGui::GetFontSize()-ImGui::GetStyle().FramePadding.y*2-42-ImGui::GetStyle().WindowPadding.y));
         if (ImGui::BeginTabBar("##categories", ImGuiTabBarFlags_NoCloseWithMiddleMouseButton)) {
             if (ImGui::BeginTabItem("General", nullptr, reset_tab ? ImGuiTabItemFlags_SetSelected : 0)) {
                 ImGui::BeginChild("##cfg", ImVec2(ImGui::GetWindowWidth(), ImGui::GetWindowHeight()-ImGui::GetFrameHeight()-ImGui::GetStyle().FramePadding.y-1));
+                ImGui::BeginDisabled();
+                ImGui::AlignTextToFramePadding();
+                ImGui::Text("Item UUID: %llu", tmp->get_uuid());
+                ImGui::EndDisabled();
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("Type: ");
                 ImGui::SameLine();
@@ -123,9 +126,24 @@ void gui_draw_item_properties() {
                 ImGui::EndChild();
                 ImGui::EndTabItem();
             }
+            ImGui::BeginDisabled(!tmp->has_behavior_settings());
             if (ImGui::BeginTabItem("Behavior")) {
                 ImGui::BeginChild("##cfg", ImVec2(ImGui::GetWindowWidth(), ImGui::GetWindowHeight()-ImGui::GetCursorPosY()));
                 tmp->draw_properties();
+                ImGui::EndChild();
+                ImGui::EndTabItem();
+            }
+            ImGui::EndDisabled();
+            if (ImGui::BeginTabItem("Style")) {
+                ImGui::BeginChild("##style", ImVec2(ImGui::GetWindowWidth(), ImGui::GetWindowHeight() - ImGui::GetCursorPosY()));
+                
+                ImGuiStyle& style = ImGui::GetStyle();
+                ImVec4* colors = style.Colors;
+
+                ImGui::ColorEdit4("Button", (float*)&colors[ImGuiCol_Button]);
+                ImGui::ColorEdit4("ButtonActive", (float*)&colors[ImGuiCol_ButtonActive]);
+                ImGui::ColorEdit4("Text", (float*)&colors[ImGuiCol_Text]);
+
                 ImGui::EndChild();
                 ImGui::EndTabItem();
             }
@@ -170,12 +188,6 @@ void gui_draw_item_properties() {
         ImGui::SameLine();
         ImGui::BeginDisabled(tmp ? tmp->disabled() : true);
         if (ImGui::Button("Apply", ImVec2(64, 26))) {
-            if (!tmp->get_uuid()) {
-                uint64_t uuid = DX_INVALID_UUID;
-                do {
-                    uuid = generate_uuid();
-                } while (tmp->set_uuid(uuid));
-            }
             tmp->properties_init(tmp->get_typename());
             dxprofile.root->items[dxstore.draw_item_properties] = tmp;
             tmp->Item::properties_apply();
@@ -242,8 +254,7 @@ void draw_top_bar() {
     dxstore.lock.unlock();
     if (ImGui::Button("Disconnect"))
         dxstore.disconnect_client(selected_uuid, "Manual disconnect issued.");
-    // TODO: Use message on client
-    // TODO: Add lock to client when server's session is locked (toggleable)
+    // TODO: "Lock" client when server's session is locked (optional)
     ImGui::EndDisabled();
     ImGui::End();
     ImGui::PopStyleColor();

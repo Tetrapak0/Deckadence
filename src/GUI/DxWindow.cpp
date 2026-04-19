@@ -131,6 +131,8 @@ int DxWindow::create(const char* title, const Vec2<int>& size, const int fullscr
 }
 
 void DxWindow::show(bool focus) {
+    if (glfwGetWindowAttrib(this->window, GLFW_ICONIFIED))
+        glfwRestoreWindow(this->window);
     glfwShowWindow(this->window);
     if (focus)
         glfwFocusWindow(this->window);

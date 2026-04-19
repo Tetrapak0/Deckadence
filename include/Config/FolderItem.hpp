@@ -8,6 +8,7 @@ public:
 
     json& request_config(int idx);
     const char* get_typename() override {return "Folder";}
+    bool has_behavior_settings() override;
     void draw_properties() override;
     void properties_cancel() override;
     void properties_apply() override;
@@ -21,6 +22,7 @@ public:
 class GoUpItem : public Item {
 public:
     const char* get_typename() override {return "Go up";}
+    bool has_behavior_settings() override;
     void draw_properties() override;
     void properties_cancel() override;
     void properties_apply() override;

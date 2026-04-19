@@ -1,4 +1,4 @@
-#include "../../include/Utilities/SpaceStripper.hpp"
+#include "Utilities/SpaceStripper.hpp"
 
 string strip_spaces(string str) {
     size_t start = 0;

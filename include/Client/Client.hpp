@@ -36,7 +36,6 @@ public:
 
     int current_profile = 0;
     vector<shared_ptr<Profile>> profiles;
-    unordered_map<uint64_t, Texture*> pendingTextures;
 
     mutex lock;
     
@@ -57,8 +56,6 @@ public:
 
     void update_config() const;
     void update_config(Item* item) const;
-
-    void request_texture(uint64_t uuid, Texture* texture);
 
     void draw_properties();
 
@@ -95,6 +92,6 @@ public:
     // }
 };
 
-uint64_t construct_header(uint32_t msg_len, uint32_t type);
+inline uint64_t construct_header(uint32_t msg_len, uint32_t type);
 int start_client_sequence();
 int client_gui_init();

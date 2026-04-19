@@ -5,10 +5,10 @@
 #define GLFW_EXPOSE_NATIVE_WAYLAND
 #endif
 
-#include "../../include/Config/Deckastore.hpp"
-#include "../../include/GUI/GUI.hpp"
+#include "Config/Deckastore.hpp"
+#include "GUI/GUI.hpp"
 
-#include "../../include/Utilities/FileDialog.hpp"
+#include "Utilities/FileDialog.hpp"
 
 string nfd_open_image() {
     NFD_Init();

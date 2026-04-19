@@ -1,5 +1,5 @@
-#include "../../include/Server/Server.hpp"
-#include "../../include/Config/Deckastore.hpp"
+#include "Server/Server.hpp"
+#include "Config/Deckastore.hpp"
 
 #include <stdio.h>
 

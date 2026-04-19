@@ -44,6 +44,7 @@ public:
     //      is enabled or disabled. It also specifies whether the button itself is
     //      enabled or disabled.
     virtual bool disabled() = 0;
+    virtual bool has_behavior_settings() {return true;};
     Item*        copy_properties(Item& other);
     virtual bool openable_in_editor();
     uint64_t     get_uuid() const;
@@ -68,6 +69,7 @@ protected:
     explicit Item(json* config, Profile& parent_profile, FolderItem* parent);
 private:
     uint64_t m_uuid = 0;
+    bool m_uuid_set = false;
 };
 
 // TODO: Implement multi-action buttons

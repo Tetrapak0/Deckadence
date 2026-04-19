@@ -1,7 +1,7 @@
-#include "../../include/Config/Deckastore.hpp"
-#include "../../include/Config/Config.hpp"
-#include "../../include/GUI/GUI.hpp"
-#include "../../include/GUI/Texture.hpp"
+#include "Config/Deckastore.hpp"
+#include "Config/Config.hpp"
+#include "GUI/GUI.hpp"
+#include "GUI/Texture.hpp"
 extern "C" {
     #include "../../resources/icon.h"
 }

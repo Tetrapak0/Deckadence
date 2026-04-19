@@ -1,6 +1,6 @@
-#include "../../include/Config/Deckastore.hpp"
-#include "../../include/GUI/GUI.hpp"
-#include "../../include/Config/Config.hpp"
+#include "Config/Deckastore.hpp"
+#include "GUI/GUI.hpp"
+#include "Config/Config.hpp"
 
 void gui_show_waiting_tasks() {
     static Deckastore& dxstore = Deckastore::get();

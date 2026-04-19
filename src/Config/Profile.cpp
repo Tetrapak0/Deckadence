@@ -1,6 +1,7 @@
-#include "../../include/Config/Profile.hpp"
-
-#include "../../include/Utilities/SpaceStripper.hpp"
+#include "Config/Profile.hpp"
+#include "Client/CLient.hpp"
+#include "Server/Message.hpp"
+#include "Utilities/SpaceStripper.hpp"
 
 Profile::Profile(Client& parent, json* config) :    config(config),
                                                     parent(parent),
@@ -12,6 +13,47 @@ Profile::Profile(Client& parent, json* config) :    config(config),
     // for (auto& page : (*config)["pages"]) {
     //     pages.emplace_back(&page, *this, nullptr);
     // }
+    fs::create_directories(this->get_profile_dir());
+    request_thumbnails();
+}
+
+void Profile::request_thumbnails() {
+    uint64_t header = construct_header(sizeof(uint64_t), static_cast<uint32_t>(MessageType::ThumbnailRequest));
+    for (auto& [uuid, texutere] : pendingTextures) {
+        string msg;
+        msg.reserve(2 * sizeof(uint64_t));
+        msg.append(reinterpret_cast<const char*>(&header), sizeof(uint64_t));
+        msg.append(reinterpret_cast<const char*>(&uuid), sizeof(uint64_t));
+        this->parent.send_res = send(this->parent.socket, msg.data(), msg.length(), 0);
+    }
+}
+
+void Profile::enqueue_thumbnail(uint64_t uuid, Texture* texture) {
+    this->pendingTextures[uuid] = texture;
+}
+
+inline fs::path Profile::get_profile_dir() {
+    return fs::path(get_cfg_dir()) / std::to_string(this->parent.get_uuid()) / this->name;
+}
+
+void Profile::handle_thumbnail_delivery(string& msg) {
+    uint64_t uuid = 0;
+    memcpy(&uuid, msg.data(), sizeof(uint64_t));
+    fs::path profileDir = this->get_profile_dir();
+    fs::create_directories(profileDir);
+    printf("Received thumbnail for %llu\n", uuid);
+    if (!pendingTextures.contains(uuid))
+        return;
+    msg.erase(msg.begin(), msg.begin() + sizeof(uint64_t));
+    if (!memcmp(msg.data(), "NUL", 3)) {
+        pendingTextures.erase(uuid);
+        return;
+    }
+    pendingTextures[uuid]->create_from_memory(
+        reinterpret_cast<const uint8_t*>(msg.data()),
+        msg.size(),
+        fs::path(profileDir / (std::to_string(uuid) + ".png")).generic_string().c_str());
+    pendingTextures.erase(uuid);
 }
 
 string Profile::compute_name() const {
@@ -24,7 +66,6 @@ string Profile::compute_name() const {
     return "Profile" + std::to_string((*config)["idx"].get<int>());
 }
 
-// TODO: Make this for properties
 uint8_t Profile::compute_rows() const {
     uint64_t t_rows = 6;
     uint64_t t_columns = 4;
@@ -50,11 +91,9 @@ uint8_t Profile::compute_columns() const {
 }
 
 int Profile::register_uuid(uint64_t uuid) {
-    if (uuid) {
-        if (std::find(this->m_used_uuids.begin(), this->m_used_uuids.end(), uuid) == this->m_used_uuids.end()) {
-            this->m_used_uuids.push_back(uuid);
-            return 0;
-        }
+    if (std::find(this->m_used_uuids.begin(), this->m_used_uuids.end(), uuid) == this->m_used_uuids.end()) {
+        this->m_used_uuids.push_back(uuid);
+        return 0;
     }
     return -1;
 }

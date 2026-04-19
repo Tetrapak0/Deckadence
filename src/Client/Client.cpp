@@ -62,7 +62,6 @@ void Client::create_config() {
 
 int Client::configure() {
     this->lock.lock(); // TODO: Change to main mutex or implement this one better
-    pendingTextures.clear();
     profiles.clear();
 
     fs::path dkd_dir = get_cfg_dir();
@@ -117,7 +116,7 @@ int Client::configure() {
     return 0;
 }
 
-uint64_t construct_header(uint32_t msg_len, uint32_t type) {
+inline uint64_t construct_header(uint32_t msg_len, uint32_t type) {
     return (uint64_t)htonl(msg_len) << 32 | htonl(type);
 }
 
@@ -157,11 +156,8 @@ void Client::update_config(Item* item) const {
     msg.reserve(sizeof(uint64_t) + cfg_string.length());
     msg.append(reinterpret_cast<const char*>(&header), sizeof(uint64_t));
     msg.append(cfg_string);
+    printf("%s\n", cfg_string.c_str());
     send(socket, msg.c_str(), msg.length(), 0);
-}
-
-void Client::request_texture(uint64_t uuid, Texture* texture) {
-
 }
 
 // TODO: Make this for profiles as well

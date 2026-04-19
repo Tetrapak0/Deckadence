@@ -41,10 +41,13 @@ json& FolderItem::request_config(int idx) {
     return (*config)["items"].back();
 }
 
-void FolderItem::draw_properties() {
+bool FolderItem::has_behavior_settings() {
+    return false;
 }
-void FolderItem::properties_cancel() {
-}
+
+void FolderItem::draw_properties() {}
+
+void FolderItem::properties_cancel() {}
 
 void FolderItem::properties_apply() {
     //this->parent = this->parent_profile.root; // TODO: Why? Pretty sure this is always set
@@ -82,6 +85,10 @@ void GoUpItem::draw_properties() {
     ImGui::BeginDisabled();
     ImGui::TextWrapped("(i) Right click button to go up");
     ImGui::EndDisabled();
+}
+
+bool GoUpItem::has_behavior_settings() {
+    return false;
 }
 
 void GoUpItem::properties_cancel() {}

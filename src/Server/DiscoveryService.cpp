@@ -1,7 +1,7 @@
-#include "../../include/Server/DiscoveryService.hpp"
-#include "../../include/Config/Config.hpp"
-#include "../../include/Config/Deckastore.hpp"
-#include "../../include/Server/Server.hpp"
+#include "Server/DiscoveryService.hpp"
+#include "Config/Config.hpp"
+#include "Config/Deckastore.hpp"
+#include "Server/Server.hpp"
 
 #include <thread>
 #include <utility>

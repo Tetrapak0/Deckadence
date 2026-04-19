@@ -1,10 +1,10 @@
-#include "../../include/Config/Deckastore.hpp"
-#include "../../include/Config/Config.hpp"
-#include "../../include/Config/Item.hpp"
-#include "../../include/Config/FilesystemAndURLItem.hpp"
-#include "../../include/Config/FolderItem.hpp"
-#include "../../include/GUI/GUI.hpp"
-#include "../../include/Utilities/FileDialog.hpp"
+#include "Config/Deckastore.hpp"
+#include "Config/Config.hpp"
+#include "Config/Item.hpp"
+#include "Config/FilesystemAndURLItem.hpp"
+#include "Config/FolderItem.hpp"
+#include "GUI/GUI.hpp"
+#include "Utilities/FileDialog.hpp"
 
 FilesystemAndURLItem::FilesystemAndURLItem(json* config, Profile& parent_profile, FolderItem* parent) : Item(config, parent_profile, parent) {
     if (config) {

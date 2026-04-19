@@ -2,6 +2,7 @@
 #include "Config/Item.hpp"
 #include "Utilities/FileDialog.hpp"
 #include "Server/Message.hpp"
+#include "Utilities/SHA256.hpp"
 
 Item::Item(json* config, Profile& parent_profile, FolderItem* parent) : config(config), parent_profile(parent_profile), parent(parent) {
     if (config) {
@@ -13,25 +14,49 @@ Item::Item(json* config, Profile& parent_profile, FolderItem* parent) : config(c
             this->has_thumbnail = (*config)["has_thumbnail"].get<bool>();
             this->m_has_thumbnail = this->has_thumbnail;
         }
-        if (config->contains("uuid") && (*config)["uuid"].is_number_unsigned()) {
-            this->m_uuid = (*config)["uuid"].get<uint64_t>();
-            this->parent_profile.register_uuid(this->m_uuid);
+        if (config->contains("uuid") && (*config)["uuid"].is_number()) {
+            this->parent_profile.unregister_uuid((*config)["uuid"].get<uint64_t>());
+            this->set_uuid((*config)["uuid"].get<uint64_t>());
+        }
+        while (!m_uuid_set) {
+            this->set_uuid(generate_uuid());
         }
         if (this->has_thumbnail) {
             fs::path img_path = get_cfg_dir() / std::to_string(parent_profile.parent.get_uuid()) / this->parent_profile.name / string(std::to_string(this->m_uuid) + ".png");
             if (fs::exists(img_path)) {
                 this->thumbnail->create_from_file(img_path.generic_string());
-            } else if (Deckastore::get().get_mode() == Deckadence::mode_t::Client) {
-                if ((Deckastore::get().get_tasks() & tasks::Client) != tasks::None) {
-                    uint64_t header = construct_header(sizeof(uint64_t), static_cast<uint32_t>(MessageType::ThumbnailRequest));
-                    printf("%llu\n", header);
-                    string msg;
-                    msg.reserve(2 * sizeof(uint64_t));
-                    msg.append(reinterpret_cast<const char*>(&header), sizeof(uint64_t));
-                    msg.append(reinterpret_cast<const char*>(&this->m_uuid), sizeof(uint64_t));
-                    this->parent_profile.parent.pendingTextures[this->m_uuid] = this->thumbnail.get();
-                    this->parent_profile.parent.send_res = send(this->parent_profile.parent.socket, msg.data(), msg.length(), 0);
+
+                SHA256 hash;
+                std::ifstream reader(img_path, std::ios::binary | std::ios::ate);
+
+                std::streamsize len = reader.tellg();
+                reader.seekg(0, std::ios::beg);
+
+                vector<uint8_t> data(len);
+
+                reader.read(reinterpret_cast<char*>(data.data()), len);
+                reader.close();
+                
+                hash.update(data.data(), len);
+
+                string hash_str = hash.toString(hash.digest());
+
+                if (config->contains("thumbnail_hash")) {
+                    if ((*config)["thumbnail_hash"] != hash_str) {
+                        printf("Thumbnail hashes for %llu don't match:\n\tJSON: %s\n\tFile: %s\n", this->m_uuid, (*config)["thumbnail_hash"].get<string>().c_str(), hash_str.c_str());
+                        if (Deckastore::get().get_mode() == Deckadence::mode_t::Client) {
+                            printf("Submitted %llu's thumbnail request to the queue.\n", this->m_uuid);
+                            this->parent_profile.enqueue_thumbnail(this->m_uuid, this->thumbnail.get());
+                        } else {
+                            (*config)["thumbnail_hash"] = hash_str;
+                        }
+                    }
+                } else {
+                    (*config)["thumbnail_hash"] = hash_str;
                 }
+            } else if (Deckastore::get().get_mode() == Deckadence::mode_t::Client) {
+                printf("Submitted %llu's thumbnail request to the queue.\n", this->m_uuid);
+                this->parent_profile.enqueue_thumbnail(this->m_uuid, this->thumbnail.get());
             }
         }
     }
@@ -42,7 +67,7 @@ void Item::draw_properties() {
     ImGui::Text("Label: ");
     ImGui::SameLine();
     // TODO: Multiline label support
-    ImGui::InputText("##lbl", &this->m_label);
+    ImGui::InputText("##label", &this->m_label);
     ImGui::Checkbox("Use image instead", &this->m_has_thumbnail);
     ImGui::SameLine();
     ImGui::BeginDisabled(!this->m_has_thumbnail);
@@ -92,30 +117,49 @@ void Item::properties_apply() {
     this->label = this->m_label;
     this->has_thumbnail = this->m_has_thumbnail;
     if (!this->has_thumbnail) {
+        this->thumbnail->destroy();
+        this->m_thumbnail->destroy();
         this->m_thumbnail = this->thumbnail;
     } else {
         if (this->m_thumbnail != this->thumbnail) {
-            fs::path profileDir(get_cfg_dir() / std::to_string(this->parent_profile.parent.get_uuid()) / this->parent_profile.name);
-            fs::create_directories(profileDir);
-            this->m_thumbnail->write_png((profileDir / (std::to_string(this->get_uuid()) + ".png")).generic_string().c_str());
+            fs::create_directories(this->parent_profile.get_profile_dir());
+            if (this->m_thumbnail->is_init() || this->m_thumbnail->ready_to_bind())
+                this->m_thumbnail->write_png((this->parent_profile.get_profile_dir() / (std::to_string(this->get_uuid()) + ".png")).generic_string().c_str());
         }
         this->thumbnail = this->m_thumbnail;
     }
-    if (!config)
-        this->config = &this->parent->request_config(idx);
     (*this->config)["idx"] = idx;
     (*this->config)["type"] = this->parent->items[idx]->get_typename();
     (*this->config)["has_thumbnail"] = this->has_thumbnail;
     (*this->config)["label"] = this->label;
     (*this->config)["uuid"] = this->m_uuid;
+    fs::path img_path = this->parent_profile.get_profile_dir() / (std::to_string(this->get_uuid()) + ".png");
+    if (fs::exists(img_path)) {
+        SHA256 hash;
+        std::ifstream reader(img_path, std::ios::binary | std::ios::ate);
+
+        std::streamsize len = reader.tellg();
+        reader.seekg(0, std::ios::beg);
+
+        vector<uint8_t> data(len);
+
+        reader.read(reinterpret_cast<char*>(data.data()), len);
+        reader.close();
+
+        hash.update(data.data(), len);
+
+        (*this->config)["thumbnail_hash"] = hash.toString(hash.digest());
+    } else {
+        (*this->config)["has_thumbnail"] = false;
+    }
 }
 
 Item* Item::copy_properties(Item& other) {
     if (this != &other) {
-        this->m_label = other.label;
+        this->m_label = other.m_label;
         this->parent = other.parent;
         this->m_has_thumbnail = other.m_has_thumbnail;
-        this->m_thumbnail = other.thumbnail;
+        this->m_thumbnail = other.m_thumbnail;
         this->m_uuid = other.m_uuid;
     }
     return this;
@@ -130,12 +174,14 @@ uint64_t Item::get_uuid() const {
 }
 
 int Item::set_uuid(uint64_t uuid) {
-    assert(!this->m_uuid);
+    assert(!m_uuid_set);
     this->m_uuid = uuid;
     if (this->parent_profile.register_uuid(uuid)) {
         this->m_uuid = 0;
         return -1;
     }
+    m_uuid_set = true;
+    (*this->config)["uuid"] = m_uuid;
     return 0;
 }
 

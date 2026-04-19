@@ -1,6 +1,6 @@
-#include "../../include/Config/Deckastore.hpp"
-#include "../../include/Config/Config.hpp"
-#include "../../include/GUI/GUI.hpp"
+#include "Config/Deckastore.hpp"
+#include "Config/Config.hpp"
+#include "GUI/GUI.hpp"
 
 void gui_overlay_texture(const ImVec2& max_size, const shared_ptr<Texture>& texture) {
         ImVec2 button_min = ImGui::GetItemRectMin();
@@ -56,7 +56,7 @@ void gui_draw_settings() {
         ImGui::InputScalar("##port", ImGuiDataType_U16, &port, &step, &step_fast);
         ImGui::EndDisabled();
         ImGui::RadioButton("Client", &mode, 1);
-        ImGui::SetCursorPos(ImVec2(340, 328));
+        ImGui::SetCursorPos(ImVec2(340, 326));
         if (ImGui::Button("Cancel", ImVec2(64, 26))) {
             mode = 0;
             discoverable = dxstore.get_discoverable();

@@ -7,8 +7,9 @@
 
 #include "FolderItem.hpp"
 
-using std::vector;
 using std::string;
+using std::unordered_map;
+using std::vector;
 
 using json = nlohmann::json;
 
@@ -29,6 +30,7 @@ private:
     int m_columns = columns;
 
     vector<uint64_t> m_used_uuids;
+    unordered_map<uint64_t, Texture*> pendingTextures;
 
     string  compute_name()    const;
     uint8_t compute_rows()    const;
@@ -39,6 +41,10 @@ public:
 
     int  register_uuid(uint64_t uuid);
     void unregister_uuid(uint64_t uuid);
+    void request_thumbnails();
+    void enqueue_thumbnail(uint64_t uuid, Texture* texture);
+    void handle_thumbnail_delivery(string& msg);
+    inline fs::path get_profile_dir();
 
     explicit Profile(Client& parent, json* config = nullptr);
 };

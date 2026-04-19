@@ -151,20 +151,26 @@ class Message<MessageType::ThumbnailRequest> final : MessageBase {
     void dispatch(Client& dxclient) override {
         uint64_t item_uuid = 0;
         memcpy(&item_uuid, msg.data(), sizeof(uint64_t));
+        printf("Received thumbnail request from %llu for %llu\n", dxclient.get_uuid(), item_uuid);
         string path = (get_cfg_dir() / std::to_string(dxclient.get_uuid()) / dxclient.get_current_profile_ref().name / (std::to_string(item_uuid) + ".png")).generic_string();
-        printf("%s\n", path.c_str());
-        if (!fs::exists(path))
-            return;
 
-        std::ifstream reader(path, std::ios::binary | std::ios::ate);
+        vector<uint8_t> data;
 
-        std::streamsize len = reader.tellg();
-        reader.seekg(0, std::ios::beg);
+        if (fs::exists(path)) {
+            std::ifstream reader(path, std::ios::binary | std::ios::ate);
 
-        vector<uint8_t> data(len);
+            std::streamsize len = reader.tellg();
+            reader.seekg(0, std::ios::beg);
 
-        reader.read(reinterpret_cast<char*>(data.data()), len);
-        reader.close();
+            data.reserve(len);
+
+            reader.read(reinterpret_cast<char*>(data.data()), len);
+            reader.close();
+        } else {
+            printf("File not found, discarding.\n");
+            data.reserve(3);
+            memcpy(data.data(), "NUL", 3);
+        }
 
         string msg;
         msg.reserve(2 * sizeof(uint64_t) + data.size());
@@ -183,20 +189,8 @@ public:
 
 template<>
 class Message<MessageType::ThumbnailDelivery> final : MessageBase {
-    void dispatch(Client& dxclient) override {
-        uint64_t uuid = 0;
-        memcpy(&uuid, msg.data(), sizeof(uint64_t));
-        fs::path profileDir = get_cfg_dir() / std::to_string(dxclient.get_uuid()) / dxclient.get_current_profile_ref().name;
-        fs::create_directories(profileDir);
-        printf("Received thumbnail for %llu\n", uuid);
-        if (!dxclient.pendingTextures.contains(uuid))
-            return;
-        msg.erase(msg.begin(), msg.begin()+sizeof(uint64_t));
-        dxclient.pendingTextures[uuid]->create_from_memory(
-            reinterpret_cast<const uint8_t*>(msg.data()),
-            msg.size(), 
-            fs::path(profileDir / (std::to_string(uuid)+".png")).generic_string().c_str());
-        dxclient.pendingTextures.erase(uuid);
+    void dispatch(Client& dxclient) override {  
+        dxclient.get_current_profile_ref().handle_thumbnail_delivery(msg);
     }
 public:
     explicit Message(const string& msg, Client& dxclient) : MessageBase(msg) {
