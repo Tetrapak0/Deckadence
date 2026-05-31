@@ -4,7 +4,11 @@ project(Deckadence)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-include_directories(include)
+include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
+include_directories(${CMAKE_CURRENT_LIST_DIR}/external)
+if (WIN32)
+include_directories(${CMAKE_CURRENT_LIST_DIR}/external/freetype)
+endif()
 
 file(GLOB_RECURSE DxSrc ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp)
 file(GLOB ImSrc ${CMAKE_CURRENT_LIST_DIR}/external/imgui/*.cpp)
@@ -27,7 +31,19 @@ add_executable(Deckadence ${DxSrc}
                           ${CMAKE_CURRENT_LIST_DIR}/external/stb/stbi.c
                           ${CMAKE_CURRENT_LIST_DIR}/resources/icon.c
                           ${CMAKE_CURRENT_LIST_DIR}/resources/EnterIcon.c
-                          ${CMAKE_CURRENT_LIST_DIR}/resources/Deckadence.rc)
+                          ${CMAKE_CURRENT_LIST_DIR}/resources/Deckadence.rc
+include/Config/ShortcutView.hpp
+include/GUI/ViewManager.hpp
+src/Config/ShortcutView.cpp
+include/Networking/Connection.hpp
+src/Client/ClientManager.cpp
+src/Config/ConfigManager.cpp
+include/Networking/Networking.hpp
+src/Networking/Networking.cpp
+include/Plugin/Plugin.hpp
+src/Plugin/Plugin.cpp
+include/Event/Event.hpp
+src/Event/Event.cpp)
 set_property(TARGET Deckadence PROPERTY CXX_STANDARD 23)
 
 # must be ran with -DCMAKE_BUILD_TYPE=Debug
